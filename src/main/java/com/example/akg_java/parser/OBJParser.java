@@ -33,7 +33,7 @@ public class OBJParser {
                 case "v": {
                     if (line.charAt(1) == ' ') {
                         Double[] coords = Arrays.stream(Arrays.copyOfRange(parts, 1, parts.length))
-                                .map(coord -> Double.parseDouble(coord))
+                                .map(Double::parseDouble)
                                 .toArray(Double[]::new);
                         if (coords.length > 3) {
                             vertexes_g.add(new Vec3d(coords[0], coords[1], coords[2], coords[3]));
@@ -89,10 +89,6 @@ public class OBJParser {
         }
         return tris;
     }
-
-/*    public Mesh getMesh() {
-        return new Mesh(this.vertexes_g, this.faces);
-    }*/
 
     public Mesh alternativeGet() {
         return new Mesh(this.vertexes_g, (ArrayList<Triangle>) this.tris);
