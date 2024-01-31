@@ -13,7 +13,7 @@ public class App extends JComponent implements ActionListener, KeyListener {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/test.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/cube.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
@@ -57,9 +57,16 @@ public class App extends JComponent implements ActionListener, KeyListener {
             }
             graphics.clear(Color.BLACK.getIntArgbPre());
             Matr4x4 model = Matr4x4.rotationY(angle)
-                    .multiply(Matr4x4.translation(0, 0, 500))
+                    .multiply(Matr4x4.translation(0, 0, 5))
                     .multiply(matr);
-            for (Face3d face : input.getFaces()) {
+            for (Triangle triangle: input.getTris()) {
+                Vec3d[] v = triangle.getPoints();
+/*                graphics.drawTriangle(new Triangle(v[0].multiply(model), v[1].multiply(model), v[2].multiply(model))
+                        , Color.WHITE.getIntArgbPre());*/
+                graphics.test(new Triangle(v[0].multiply(model), v[1].multiply(model), v[2].multiply(model)),
+                        Color.WHITE.getIntArgbPre());
+            }
+/*            for (Face3d face : input.getFaces()) {
                 for (int i = 0; i < face.g_vertexes.length; i++) {
                     Vec3d first = input.getVertexes().get((face.g_vertexes[i] - 1 +
                                     input.getVertexes().size()) % input.getVertexes().size());
@@ -69,7 +76,7 @@ public class App extends JComponent implements ActionListener, KeyListener {
                     second = second.multiply(model);
                     graphics.DDAline((int) first.x, (int) first.y, (int) second.x, (int) second.y, Color.GREEN.getIntArgbPre());
                 }
-            }
+            }*/
             g.drawImage(graphics.getBuffer(), 0, 0, null);
         }
     }
