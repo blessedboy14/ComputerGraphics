@@ -2,6 +2,7 @@ package com.example.akg_java.parser;
 
 import com.example.akg_java.math.Face3d;
 import com.example.akg_java.math.Mesh;
+import com.example.akg_java.math.Triangle;
 import com.example.akg_java.math.Vec3d;
 
 
@@ -15,7 +16,7 @@ import java.util.List;
 public class OBJParser {
     private String fileName;
     private List<Vec3d> vertexes_g = new ArrayList<>();
-    private List<Face3d> faces = new ArrayList<>();
+    private List<Triangle> tris = new ArrayList<>();
 
     public OBJParser(String fileName) {
         this.fileName = fileName;
@@ -23,7 +24,7 @@ public class OBJParser {
 
     public void parseFile() throws IOException {
         vertexes_g.clear();
-        faces.clear();
+        tris.clear();
         BufferedReader reader = new BufferedReader(new FileReader(this.fileName));
         while (reader.ready()) {
             String line = reader.readLine();
@@ -55,26 +56,45 @@ public class OBJParser {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(vertex -> Integer.parseInt(vertex.split("//")[0]))
                     .toArray(Integer[]::new);
-            faces.add(new Face3d(g_vertexes));
+            tris.addAll(parseIntsToTriangle(g_vertexes));
         } else if (data[0].contains("/") && data[0].split("/").length == 3) {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(vertex -> Integer.parseInt(vertex.split("/")[0]))
                     .toArray(Integer[]::new);
-            faces.add(new Face3d(g_vertexes));
+            tris.addAll(parseIntsToTriangle(g_vertexes));
         } else if (data[0].contains("/")) {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(vertex -> Integer.parseInt(vertex.split("/")[0]))
                     .toArray(Integer[]::new);
-            faces.add(new Face3d(g_vertexes));
+            tris.addAll(parseIntsToTriangle(g_vertexes));
         } else {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(Integer::parseInt)
                     .toArray(Integer[]::new);
-            faces.add(new Face3d(g_vertexes));
+            tris.addAll(parseIntsToTriangle(g_vertexes));
         }
     }
 
-    public Mesh getMesh() {
+    private List<Triangle> parseIntsToTriangle(Integer[] ints) {
+        List<Triangle> tris = new ArrayList<>();
+        if (ints.length > 3) {
+            Vec3d main = vertexes_g.get(ints[0]-1);
+            for (int i = 1; i < ints.length - 2; i++) {
+                tris.add(new Triangle(main, vertexes_g.get(ints[i] - 1),
+                        vertexes_g.get(ints[i+1] - 1)));
+            }
+        } else {
+            tris.add(new Triangle(vertexes_g.get(ints[0] - 1), vertexes_g.get(ints[1] - 1),
+                    vertexes_g.get(ints[2] - 1)));
+        }
+        return tris;
+    }
+
+/*    public Mesh getMesh() {
         return new Mesh(this.vertexes_g, this.faces);
+    }*/
+
+    public Mesh alternativeGet() {
+        return new Mesh(this.vertexes_g, (ArrayList<Triangle>) this.tris);
     }
 }

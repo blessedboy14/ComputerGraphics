@@ -1,6 +1,8 @@
 package com.example.akg_java.math;
 
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class Graphics {
     private BufferedImage buffer;
@@ -36,13 +38,6 @@ public class Graphics {
         double y = y1;
         dx = dx / steps;
         dy = dy / steps;
-/*        do {
-            if (Math.round(x) >= 0 && Math.round(x) < width - 1 && Math.round(y) >= 0 && Math.round(y) < height - 1) {
-                buffer.setRGB((int) Math.round(x), (int) Math.round(y), color);
-            }
-            x += dx;
-            y += dy;
-        } while ((x != x2 || x1 == x2) && (y != y2 || y1 == y2));*/
         for (int i = 0; i < steps; ++i) {
             buffer.setRGB((int)Math.round(x), (int)Math.round(y), color);
             x += dx;
@@ -62,6 +57,13 @@ public class Graphics {
         }
     }
 
+    public void drawTriangle(Triangle tri, int color) {
+        Vec3d[] v = tri.getPoints();
+        DDAline((int)v[0].x, (int)v[0].y, (int)v[1].x, (int)v[1].y, color);
+        DDAline((int)v[1].x, (int)v[1].y, (int)v[2].x, (int)v[2].y, color);
+        DDAline((int)v[2].x, (int)v[2].y, (int)v[0].x, (int)v[0].y, color);
+    }
+
     public void fillTopFlat(Vec3d first, Vec3d second, Vec3d third, int color) {
         double side1 = (third.x - first.x) / (third.y - first.y);// FILL TOP FLAT TRIANGLE
         double side2 = (third.x - second.x) / (third.y - second.y);
@@ -74,23 +76,45 @@ public class Graphics {
         }
     }
 
-/*    public void rasterize(Vec3d first, Vec3d second, Vec3d third, int color) {
-        Vec3d[] points = Arrays.stream(triangle.getPoints())
-                .sorted((vec1, vec2) -> (int) Math.ceil(vec1.y - vec2.y))
-                .map(vec -> new Vec3d((int) vec.getX(), (int) vec.y, (int) vec.z))
-                .toArray(Vec3d[]::new);
+    public void sortVerticesByY(Triangle input) {
+        Comparator<Vec3d> comparator = Comparator.comparingDouble(vert -> vert.y);
+        Arrays.sort(input.getPoints(), comparator);
+    }
+
+    public void test(Triangle input, int color) {
+        sortVerticesByY(input);
+        Vec3d[] vertices = input.getPoints();
+        double total_height = vertices[2].y-vertices[0].y;
+        for (int i=0; i<total_height; i++) {
+            boolean second_half = i>vertices[1].y-vertices[0].y || vertices[1].y==vertices[0].y;
+            double segment_height = second_half ? vertices[2].y-vertices[1].y : vertices[1].y-vertices[0].y;
+            double alpha = i/total_height;
+            double beta = (i - (second_half ? vertices[1].y - vertices[0].y : 0)) / segment_height;
+            Vec3d A = vertices[0].add(vertices[2].subtract(vertices[0]).grade(alpha));
+            Vec3d B = second_half ? vertices[1].add((vertices[2].subtract(vertices[1])).grade(beta))
+                    : vertices[0].add((vertices[1].subtract(vertices[0])).grade(beta));
+            if (A.x>B.x) Vec3d.swap(A, B);
+/*            DDAline((int)Math.round(A.x), (int)Math.round(A.y), (int)Math.round(B.x), (int)Math.round(B.y), color);*/
+            for (int j=(int)Math.round(A.x); j<=B.x; j++) {
+                buffer.setRGB(j, (int)Math.round(vertices[0].y+i), color); // attention, due to int casts t0.y+i != A.y
+            }
+        }
+    }
+
+    public void rasterize(Triangle input, int color) {
+        sortVerticesByY(input);
+        Vec3d[] vertices = input.getPoints();
         if (vertices[1].y == vertices[2].y) {
             fillBottomFlat(vertices[0], vertices[1], vertices[2], color);
         } else if (vertices[0].y == vertices[1].y) {
             fillTopFlat(vertices[0], vertices[1], vertices[2], color);
         } else {
-            Vec3d divider = new Vec3d(vertices[0].x +
-                    (vertices[1].y - vertices[0].y) / (vertices[2].y - vertices[0].y) * (vertices[2].x - vertices[0].x),
+            Vec3d divider = new Vec3d((vertices[0].x + vertices[2].x) / 2,
                     vertices[1].y, 0);
             fillBottomFlat(vertices[0], vertices[1], divider, color);
             fillTopFlat(vertices[1], divider, vertices[2], color);
         }
-    }*/
+    }
 
     public BufferedImage getBuffer() {
         return this.buffer;
