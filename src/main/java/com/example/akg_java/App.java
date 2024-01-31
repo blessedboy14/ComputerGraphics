@@ -10,10 +10,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class App extends JComponent implements ActionListener, KeyListener {
-    private static final int HEIGHT = 600;
+    private static final int HEIGHT = 800;
     private static final int HEADER = 40;
-    private static final int WIDTH = 800;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/teapot.obj";
+    private static final int WIDTH = 1600;
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/test.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
@@ -42,6 +42,10 @@ public class App extends JComponent implements ActionListener, KeyListener {
         timer.start();
     }
 
+    public Matr4x4 matr = Matr4x4.getCameraMatrix(Matr4x4.identity())
+            .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1, 1000.0f))
+            .multiply(Matr4x4.screen(WIDTH, HEIGHT));
+
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
@@ -51,12 +55,10 @@ public class App extends JComponent implements ActionListener, KeyListener {
             if (angle > 360) {
                 angle -= 360;
             }
-            graphics.clear(Color.WHITE.getIntArgbPre());
+            graphics.clear(Color.BLACK.getIntArgbPre());
             Matr4x4 model = Matr4x4.rotationY(angle)
-                    .multiply(Matr4x4.translation(0, 0, 10))
-                    .multiply(Matr4x4.getCameraMatrix(Matr4x4.identity()))
-                    .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1, 1000.0f))
-                    .multiply(Matr4x4.screen(WIDTH, HEIGHT));
+                    .multiply(Matr4x4.translation(0, 0, 500))
+                    .multiply(matr);
             for (Face3d face : input.getFaces()) {
                 for (int i = 0; i < face.g_vertexes.length; i++) {
                     Vec3d first = input.getVertexes().get((face.g_vertexes[i] - 1 +
