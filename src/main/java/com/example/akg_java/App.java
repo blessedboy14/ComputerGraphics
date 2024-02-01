@@ -13,7 +13,7 @@ public class App extends JComponent implements ActionListener, KeyListener {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/porshe.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/head.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
@@ -42,31 +42,60 @@ public class App extends JComponent implements ActionListener, KeyListener {
         timer.start();
     }
 
-    public Matr4x4 matr = Matr4x4.translation(0, 0, 100)
+    private Vec3d lightDir = new Vec3d(0, 0, -1);
+
+    public Matr4x4 matr = Matr4x4.rotationY(180)
+            .multiply(Matr4x4.translation(0, 0, 1.5))
             .multiply(Matr4x4.getCameraMatrix(Matr4x4.identity()))
             .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1, 1000.0f))
             .multiply(Matr4x4.screen(WIDTH, HEIGHT));
 
+    public ZBuffer buffer = new ZBuffer(WIDTH, HEIGHT);
+
+    private Vec3d camera = new Vec3d(0, 0, -1);
+
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
+            buffer.drop();
 /*            angle += (System.currentTimeMillis() - prev) / 1000.0 * 90;*/
             frame.setTitle(String.format("%d fps", (int) (1000 / (System.currentTimeMillis() - prev))));
             prev = System.currentTimeMillis();
             if (angle > 360) {
                 angle -= 360;
             }
+            java.awt.Color clr = new java.awt.Color(0, 255, 0);
             graphics.clear(Color.BLACK.getIntArgbPre());
-            Matr4x4 model = Matr4x4.rotationY(angle)
-                    .multiply(matr);
+/*            Matr4x4 model = Matr4x4.rotationY(angle)
+                    .multiply(matr);*/
             for (Triangle triangle: input.getTris()) {
                 Vec3d[] v = triangle.getPoints();
-/*                graphics.drawTriangle(new Triangle(v[0].multiply(model), v[1].multiply(model), v[2].multiply(model))
-                        , Color.WHITE.getIntArgbPre());*/
-/*                graphics.rasterBarycentric(new Triangle(v[0].multiply(model), v[1].multiply(model), v[2].multiply(model)),
-                        WIDTH, HEIGHT, Color.WHITE.getIntArgbPre());*/
-                graphics.test(new Triangle(v[0].multiply(model), v[1].multiply(model), v[2].multiply(model)),
-                       Color.GREEN.getIntArgbPre());
+                Vec3d normal = v[2].subtract(v[0]).Cross(v[1].subtract(v[0]));
+                normal.normalize();
+                double test = normal.Dot(camera);
+                double intense = normal.Dot(lightDir);
+                if (test < 0) {
+
+                } else {
+                    if (intense > 0) {
+                        graphics.rasterBarycentric(triangle.multiplyMatrix(matr), buffer,
+                                WIDTH, HEIGHT, new java.awt.Color((float) (clr.getRed() * intense) / 255,
+                                        (float) (clr.getGreen() * intense) / 255,
+                                        (float) (clr.getBlue() * intense) / 255,
+                                        1).getRGB());
+                    }
+/*                    graphics.drawTriangle(triangle.multiplyMatrix(model)
+                            ,new java.awt.Color((float) (clr.getRed() * intense) / 255,
+                                    (float) (clr.getGreen() * intense) / 255,
+                                    (float) (clr.getBlue() * intense) / 255,
+                                    1).getRGB());*/
+                }
+/*                if (intense > 0) {
+                    graphics.rasterize(triangle.multiplyMatrix(model), new java.awt.Color((float) (clr.getRed() * intense) / 255,
+                            (float) (clr.getGreen() * intense) / 255,
+                            (float) (clr.getBlue() * intense) / 255,
+                            1).getRGB());
+                }*/
             }
             g.drawImage(graphics.getBuffer(), 0, 0, null);
         }

@@ -49,6 +49,17 @@ public class Vec3d {
         }
     }
 
+    public double magnitude() {
+        return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
+    }
+
+    public void normalize() {
+        double mgn = magnitude();
+        this.x /= mgn;
+        this.y /= mgn;
+        this.z /= mgn;
+    }
+
     public Vec3d multiply(Matr4x4 matr) {
         double x = this.x * matr.matrix[0][0] + this.y * matr.matrix[1][0] + this.z * matr.matrix[2][0] + this.w * matr.matrix[3][0];
         double y = this.x * matr.matrix[0][1] + this.y * matr.matrix[1][1] + this.z * matr.matrix[2][1] + this.w * matr.matrix[3][1];

@@ -13,6 +13,10 @@ public class Triangle {
         return points;
     }
 
+    public Triangle multiplyMatrix(Matr4x4 matrix) {
+        return new Triangle(this.points[0].multiply(matrix), this.points[1].multiply(matrix), this.points[2].multiply(matrix));
+    }
+
     public void setPoints(Vec3d[] points) {
         this.points = points;
     }

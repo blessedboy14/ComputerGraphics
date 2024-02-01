@@ -58,7 +58,7 @@ public class Graphics {
     }
 
     // sweep line algorithm
-    public void test(Triangle input, int color) {
+    public void rasterize(Triangle input, int color) {
         sortVerticesByY(input);
         Vec3d[] vertices = input.getPoints();
         double total_height = vertices[2].y-vertices[0].y;
@@ -88,7 +88,7 @@ public class Graphics {
 
 
     // more time-consuming
-    public void rasterBarycentric(Triangle input, int width, int height, int color) {//more time-consuming
+    public void rasterBarycentric(Triangle input, ZBuffer bf, int width, int height, int color) {//more time-consuming
         Vec3d bboxmin = new Vec3d(width - 1, height - 1, 0);
         Vec3d bboxmax = new Vec3d(0, 0, 0);
         Vec3d clamp = new Vec3d(width - 1, height - 1, 0);
@@ -96,7 +96,6 @@ public class Graphics {
         for (int i = 0; i < 3; i++) {
             bboxmin.x = Math.max(0, Math.min(bboxmin.x, p[i].x));
             bboxmin.y = Math.max(0, Math.min(bboxmin.y, p[i].y));
-
             bboxmax.x = Math.min(clamp.x, Math.max(bboxmax.x, p[i].x));
             bboxmax.y = Math.min(clamp.y, Math.max(bboxmax.y, p[i].y));
         }
@@ -104,7 +103,13 @@ public class Graphics {
         for(point.x = bboxmin.x; point.x <= bboxmax.x; point.x++) {
             for(point.y = bboxmin.y; point.y <= bboxmax.y; point.y++) {
                 Vec3d bc_vec = barycentric(p, point);
-                if (!(bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
+                if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
+                    continue;
+                }
+                point.z = 0;
+                point.z += p[0].z*bc_vec.x + p[1].z*bc_vec.y + p[2].z*bc_vec.z;
+                if (point.z < bf.get((int)Math.round(point.x), (int)Math.round(point.y))) {
+                    bf.edit((int)Math.round(point.x), (int)Math.round(point.y), point.z);
                     buffer.setRGB((int)Math.round(point.x), (int)Math.round(point.y), color);
                 }
             }
