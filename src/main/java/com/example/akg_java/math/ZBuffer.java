@@ -9,13 +9,13 @@ public class ZBuffer {
         this.width = width;
         bf = new double[width][height];
         for (int i = 0; i < width; i++) {
-            Arrays.fill(bf[i], Integer.MAX_VALUE);
+            Arrays.fill(bf[i], Float.POSITIVE_INFINITY);
         }
     }
 
     public void drop() {
         for (int i = 0; i < width; i++) {
-            Arrays.fill(bf[i], Integer.MAX_VALUE);
+            Arrays.fill(bf[i], Float.POSITIVE_INFINITY);
         }
     }
 

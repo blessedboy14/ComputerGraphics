@@ -79,7 +79,7 @@ public class OBJParser {
         List<Triangle> tris = new ArrayList<>();
         if (ints.length > 3) {
             Vec3d main = vertexes_g.get(ints[0]-1);
-            for (int i = 1; i < ints.length - 2; i++) {
+            for (int i = 1; i < ints.length - 1; i++) {
                 tris.add(new Triangle(main, vertexes_g.get(ints[i] - 1),
                         vertexes_g.get(ints[i+1] - 1)));
             }

@@ -13,13 +13,14 @@ public class App extends JComponent implements ActionListener, KeyListener {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/head.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/lord.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
     private Graphics graphics;
     private Mesh input;
-    private Timer timer = new Timer(1, this);
+    private Camera camera;
+/*    private Timer timer = new Timer(1, this);*/
     private double angle = 0;
     public static void main(String[] args) throws AWTException, IOException {
         BufferedImage buffer = new BufferedImage(WIDTH + 1, HEIGHT + 1, BufferedImage.TYPE_INT_RGB);
@@ -39,71 +40,82 @@ public class App extends JComponent implements ActionListener, KeyListener {
         graphics = new Graphics(buffer, WIDTH, HEIGHT);
         prev = System.currentTimeMillis();
         input = Mesh.loadMesh(App.fileName);
-        timer.start();
+        repaint();
+/*        timer.start();*/
     }
 
-    private Vec3d lightDir = new Vec3d(0, 0, -1);
-
-    public Matr4x4 matr = Matr4x4.rotationY(180)
-            .multiply(Matr4x4.translation(0, 0, 1.5))
+/*    public Matr4x4 matr = Matr4x4.rotationY(0)
+            .multiply(Matr4x4.translation(0, 0, 400))
             .multiply(Matr4x4.getCameraMatrix(Matr4x4.identity()))
             .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1, 1000.0f))
+            .multiply(Matr4x4.screen(WIDTH, HEIGHT));*/
+
+    public Matr4x4 screenProjection =
+            Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 10.0f)
             .multiply(Matr4x4.screen(WIDTH, HEIGHT));
+
+    public Matr4x4 objectPosition = Matr4x4.rotationY(180)
+            .multiply(Matr4x4.translation(0, -70, 110));
+
+    public Matr4x4 matr = objectPosition
+            .multiply(Matr4x4.getCameraMatrix(Matr4x4.identity()))
+            .multiply(screenProjection);
 
     public ZBuffer buffer = new ZBuffer(WIDTH, HEIGHT);
 
-    private Vec3d camera = new Vec3d(0, 0, -1);
+    private Vec3d cameraVec = new Vec3d(0, 0, 0);
+    private Vec3d lightDir = new Vec3d(0, 0.6, 0.8);
 
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
             buffer.drop();
+            graphics.clear(Color.BLACK.getIntArgbPre());
 /*            angle += (System.currentTimeMillis() - prev) / 1000.0 * 90;*/
             frame.setTitle(String.format("%d fps", (int) (1000 / (System.currentTimeMillis() - prev))));
             prev = System.currentTimeMillis();
-            if (angle > 360) {
+/*            if (angle > 360) {
                 angle -= 360;
-            }
-            java.awt.Color clr = new java.awt.Color(0, 255, 0);
-            graphics.clear(Color.BLACK.getIntArgbPre());
-/*            Matr4x4 model = Matr4x4.rotationY(angle)
-                    .multiply(matr);*/
+            }*/
+            java.awt.Color clr = new java.awt.Color(255, 153, 153);
             for (Triangle triangle: input.getTris()) {
-                Vec3d[] v = triangle.getPoints();
+                Triangle tri = triangle.multiplyMatrix(objectPosition);
+                Vec3d[] v = tri.getPoints();
                 Vec3d normal = v[2].subtract(v[0]).Cross(v[1].subtract(v[0]));
                 normal.normalize();
-                double test = normal.Dot(camera);
+                double similar = normal.Dot(cameraVec);
                 double intense = normal.Dot(lightDir);
-                if (test < 0) {
-
-                } else {
-                    if (intense > 0) {
+/*                if (similar >= 0) {*/
+                    if (intense >= 0) {
                         graphics.rasterBarycentric(triangle.multiplyMatrix(matr), buffer,
                                 WIDTH, HEIGHT, new java.awt.Color((float) (clr.getRed() * intense) / 255,
                                         (float) (clr.getGreen() * intense) / 255,
                                         (float) (clr.getBlue() * intense) / 255,
                                         1).getRGB());
+/*                        graphics.drawTriangle(triangle.multiplyMatrix(matr), Color.GREEN.getIntArgbPre());*/
+/*                graphics.rasterBarycentric(triangle.multiplyMatrix(matr), buffer,
+                        WIDTH, HEIGHT, Color.GREEN.getIntArgbPre());*/
+/*                        graphics.scanlineRasterization(triangle.multiplyMatrix(matr),
+                                new java.awt.Color((float) (clr.getRed() * intense) / 255,
+                                (float) (clr.getGreen() * intense) / 255,
+                                (float) (clr.getBlue() * intense) / 255,
+                                1).getRGB());*/
+/*                        graphics.triangle(triangle.multiplyMatrix(matr), buffer,
+                                new java.awt.Color((float) (clr.getRed() * intense) / 255,
+                                        (float) (clr.getGreen() * intense) / 255,
+                                        (float) (clr.getBlue() * intense) / 255,
+                                        1).getRGB());*/
                     }
-/*                    graphics.drawTriangle(triangle.multiplyMatrix(model)
-                            ,new java.awt.Color((float) (clr.getRed() * intense) / 255,
-                                    (float) (clr.getGreen() * intense) / 255,
-                                    (float) (clr.getBlue() * intense) / 255,
-                                    1).getRGB());*/
-                }
-/*                if (intense > 0) {
-                    graphics.rasterize(triangle.multiplyMatrix(model), new java.awt.Color((float) (clr.getRed() * intense) / 255,
-                            (float) (clr.getGreen() * intense) / 255,
-                            (float) (clr.getBlue() * intense) / 255,
-                            1).getRGB());
-                }*/
+/*                }*/
             }
             g.drawImage(graphics.getBuffer(), 0, 0, null);
+            /*                        graphics.drawTriangle(triangle.multiplyMatrix(model)
+                                ,Color.GREEN.getIntArgbPre());*/
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        repaint();
     }
 
     @Override
