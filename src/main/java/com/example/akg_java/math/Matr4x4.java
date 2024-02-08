@@ -1,9 +1,13 @@
 package com.example.akg_java.math;
 
-public class Matr4x4 {
-    public double[][] matrix = new double[4][4];
+import com.example.akg_java.EngineUtility.Camera;
 
-    Matr4x4(double[][] input) {
+import javax.vecmath.Quat4f;
+
+public class Matr4x4 {
+    public double[][] matrix;
+
+    public Matr4x4(double[][] input) {
         this.matrix = input;
     }
 
@@ -94,6 +98,15 @@ public class Matr4x4 {
         });
     }
 
+    public static Matr4x4 camera(double distance) {
+        return new Matr4x4(new double[][]{
+                {1, 0, 0, 0},
+                {0, 1, 0, 0},
+                {0, 0, 1, 0},
+                {0, 0, -distance, 1}
+        });
+    }
+
     public static Matr4x4 getCameraMatrix(Matr4x4 cameraModel) {
         double[][] model = cameraModel.matrix;
         Vec3d xAxis = new Vec3d(model[0][0], model[0][1], model[0][2]);
@@ -111,7 +124,28 @@ public class Matr4x4 {
         });
     }
 
-    public static Matr4x4 cameraViewMatrix(Vec3d eye, double pitch, float yaw) {
+    public static Matr4x4 exampleCamera() {
+        return new Matr4x4(new double[][]{
+                {1, 0, 0, 0},
+                {0, 1, 0, 0},
+                {0, 0, 1, 0},
+                {0, 0, -5, 1}
+        });
+    }
+
+    public static Matr4x4 getCameraMatrix(Vec3d eye, Vec3d target, Vec3d up) {
+        Vec3d zAxis = target.subtract(eye).toNormal();
+        Vec3d xAxis = up.Cross(zAxis).toNormal();
+        Vec3d yAxis = up;
+        return new Matr4x4(new double[][]{
+                {xAxis.x, yAxis.x, zAxis.x, 0},
+                {xAxis.y, yAxis.y, zAxis.y, 0},
+                {xAxis.z, yAxis.z, zAxis.z, 0},
+                {-eye.Dot(xAxis), -eye.Dot(yAxis), -eye.Dot(zAxis), 1}
+        });
+    }
+
+    public static Matr4x4 cameraViewMatrix(Vec3d eye, double pitch, double yaw) {
         double radPitch = pitch * Math.PI / 180;
         double radYaw = yaw * Math.PI / 180;
         double cosPitch = Math.cos(radPitch);
@@ -127,5 +161,15 @@ public class Matr4x4 {
                 {xAxis.z, yAxis.z, zAxis.z, 0},
                 {-xAxis.Dot(eye), -yAxis.Dot(eye), -zAxis.Dot(eye), 1}
         });
+    }
+
+    public static Matr4x4 arcBallCamera(double distance, double xRotate, double yRotate) {
+        Vec3d position = new Vec3d(0, 0, -distance);
+        Vec3d target = new Vec3d(0, 0, 0);
+        Matr4x4 rotationX = Matr4x4.rotationX(-xRotate);
+        position = position.subtract(target).multiply(rotationX);
+        Matr4x4 rotationY = Matr4x4.rotationY(-yRotate);
+        Vec3d finalPos = (position.subtract(target).multiply(rotationY));
+        return Matr4x4.getCameraMatrix(finalPos, new Vec3d(0, 0, 0), new Vec3d(0, 1, 0));
     }
 }

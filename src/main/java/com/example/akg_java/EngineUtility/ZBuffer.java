@@ -1,10 +1,10 @@
-package com.example.akg_java.math;
+package com.example.akg_java.EngineUtility;
 
 import java.util.Arrays;
 
 public class ZBuffer {
     private double[][] bf;
-    private int width;
+    private final int width;
     public ZBuffer(int width, int height) {
         this.width = width;
         bf = new double[width][height];
@@ -27,7 +27,4 @@ public class ZBuffer {
         return this.bf[x][y];
     }
 
-    public double[][] getBf() {
-        return this.bf;
-    }
 }

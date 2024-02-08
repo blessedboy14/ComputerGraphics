@@ -1,7 +1,6 @@
 package com.example.akg_java.parser;
 
-import com.example.akg_java.math.Face3d;
-import com.example.akg_java.math.Mesh;
+import com.example.akg_java.EngineUtility.Mesh;
 import com.example.akg_java.math.Triangle;
 import com.example.akg_java.math.Vec3d;
 
@@ -90,7 +89,7 @@ public class OBJParser {
         return tris;
     }
 
-    public Mesh alternativeGet() {
+    public Mesh getMesh() {
         return new Mesh(this.vertexes_g, (ArrayList<Triangle>) this.tris);
     }
 }

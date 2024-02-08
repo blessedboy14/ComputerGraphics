@@ -17,18 +17,6 @@ public class Vec3d {
         this.z = z;
     }
 
-    public void setPoints(double x, double y, double z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    public static void swap(Vec3d A, Vec3d B) {
-        Vec3d temp = new Vec3d(B.x, B.y, B.z);
-        B.setPoints(A.x, A.y, A.z);
-        A.setPoints(temp.x, temp.y, temp.z);
-    }
-
     public Vec3d subtract(Vec3d other) {
         return new Vec3d(this.x - other.x, this.y - other.y, this.z - other.z);
     }
@@ -60,6 +48,18 @@ public class Vec3d {
         this.z /= mgn;
     }
 
+    public Vec3d toNormal() {
+        double mgn = magnitude();
+        if (mgn != 0) {
+            double x1 = this.x / mgn;
+            double y1 = this.y / mgn;
+            double z1 = this.z / mgn;
+            return new Vec3d(x1, y1, z1);
+        } else {
+            return this;
+        }
+    }
+
     public Vec3d multiply(Matr4x4 matr) {
         double x = this.x * matr.matrix[0][0] + this.y * matr.matrix[1][0] + this.z * matr.matrix[2][0] + this.w * matr.matrix[3][0];
         double y = this.x * matr.matrix[0][1] + this.y * matr.matrix[1][1] + this.z * matr.matrix[2][1] + this.w * matr.matrix[3][1];
@@ -87,5 +87,8 @@ public class Vec3d {
         return new Vec3d(right.x- left.x, right.y - left.y, right.z - left.z);
     }
 
+    public static Vec3d zero() {
+        return new Vec3d(0, 0, 0);
+    }
 
 }

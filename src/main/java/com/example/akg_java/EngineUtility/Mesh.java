@@ -1,22 +1,17 @@
-package com.example.akg_java.math;
+package com.example.akg_java.EngineUtility;
 
+import com.example.akg_java.math.Face3d;
+import com.example.akg_java.math.Triangle;
+import com.example.akg_java.math.Vec3d;
 import com.example.akg_java.parser.OBJParser;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Mesh {
     private List<Vec3d> vertexes;
-    private List<Face3d> faces;
     private List<Triangle> tris;
-
-    public Mesh(List<Vec3d> vertexes, List<Face3d> faces) {
-        this.vertexes = vertexes;
-        this.faces = faces;
-    }
 
     public Mesh(List<Vec3d> vertexes, ArrayList<Triangle> tris) {
         this.vertexes = vertexes;
@@ -26,8 +21,7 @@ public class Mesh {
     public static Mesh loadMesh(String path) throws IOException {
         OBJParser parser = new OBJParser(path);
         parser.parseFile();
-/*        return parser.getMesh();*/
-        return parser.alternativeGet();
+        return parser.getMesh();
     }
 
     public List<Triangle> getTris() {
@@ -46,11 +40,4 @@ public class Mesh {
         this.vertexes = vertexes;
     }
 
-    public List<Face3d> getFaces() {
-        return faces;
-    }
-
-    public void setFaces(List<Face3d> faces) {
-        this.faces = faces;
-    }
 }
