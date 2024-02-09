@@ -1,12 +1,18 @@
 package com.example.akg_java.math;
 
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class Face3d {
-    public Integer[] g_vertexes;
-    public Integer[] t_vertexes;
-    public Integer[] n_vectors;
-    public Face3d(Integer[] g_vertexes){
-        this.g_vertexes = g_vertexes;
+
+    private Integer[] gVertexes;
+    private Integer[] tVertexes;
+    private Integer[] nVectors;
+
+    public Face3d(Integer[] gVertexes) {
+        this.gVertexes = gVertexes;
     }
+
 }

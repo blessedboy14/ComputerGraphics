@@ -1,16 +1,19 @@
 package com.example.akg_java.math;
 
 public class Vec3d {
+
     public double x;
     public double y;
     public double z;
     public double w = 1;
+
     public Vec3d(double x, double y, double z, double w) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.w = w;
     }
+
     public Vec3d(double x, double y, double z) {
         this.x = x;
         this.y = y;
@@ -50,7 +53,7 @@ public class Vec3d {
     }
 
     public double magnitude() {
-        return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 
     public void normalize() {
@@ -71,20 +74,20 @@ public class Vec3d {
     }
 
     public double sqr() {
-        return x*x + y*y + z*z;
+        return x * x + y * y + z * z;
     }
 
     public double Dot(Vec3d other) {
-        return x*other.x + y*other.y + z* other.z;
+        return x * other.x + y * other.y + z * other.z;
     }
 
     public Vec3d Cross(Vec3d other) {
-        return new Vec3d(this.y*other.z - other.y*this.z, -(this.x*other.z - other.x*this.z),
-                this.x*other.y - other.x*this.y);
+        return new Vec3d(this.y * other.z - other.y * this.z, -(this.x * other.z - other.x * this.z),
+                this.x * other.y - other.x * this.y);
     }
 
     public static Vec3d vectorOfTwoPoints(Vec3d left, Vec3d right) {
-        return new Vec3d(right.x- left.x, right.y - left.y, right.z - left.z);
+        return new Vec3d(right.x - left.x, right.y - left.y, right.z - left.z);
     }
 
 

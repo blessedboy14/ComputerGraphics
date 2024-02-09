@@ -1,21 +1,22 @@
 package com.example.akg_java.math;
 
 public class Matr4x4 {
-    public double[][] matrix = new double[4][4];
+
+    public final double[][] matrix;
 
     Matr4x4(double[][] input) {
         this.matrix = input;
     }
 
     public Matr4x4 multiply(Matr4x4 other) {
-        double[][] matrix = new double[4][4];
+        double[][] newMatrix = new double[4][4];
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                matrix[i][j] = this.matrix[i][0] * other.matrix[0][j] + this.matrix[i][1] * other.matrix[1][j]
+                newMatrix[i][j] = this.matrix[i][0] * other.matrix[0][j] + this.matrix[i][1] * other.matrix[1][j]
                         + this.matrix[i][2] * other.matrix[2][j] + this.matrix[i][3] * other.matrix[3][j];
             }
         }
-        return new Matr4x4(matrix);
+        return new Matr4x4(newMatrix);
     }
 
     public static Matr4x4 identity() {

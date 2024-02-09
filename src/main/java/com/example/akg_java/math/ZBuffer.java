@@ -3,8 +3,10 @@ package com.example.akg_java.math;
 import java.util.Arrays;
 
 public class ZBuffer {
-    private double[][] bf;
-    private int width;
+
+    private final double[][] bf;
+    private final int width;
+
     public ZBuffer(int width, int height) {
         this.width = width;
         bf = new double[width][height];

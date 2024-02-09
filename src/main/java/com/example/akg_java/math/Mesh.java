@@ -1,13 +1,15 @@
 package com.example.akg_java.math;
 
 import com.example.akg_java.parser.OBJParser;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 public class Mesh {
     private List<Vec3d> vertexes;
     private List<Face3d> faces;
@@ -26,31 +28,7 @@ public class Mesh {
     public static Mesh loadMesh(String path) throws IOException {
         OBJParser parser = new OBJParser(path);
         parser.parseFile();
-/*        return parser.getMesh();*/
+        /*        return parser.getMesh();*/
         return parser.alternativeGet();
-    }
-
-    public List<Triangle> getTris() {
-        return tris;
-    }
-
-    public void setTris(List<Triangle> tris) {
-        this.tris = tris;
-    }
-
-    public List<Vec3d> getVertexes() {
-        return vertexes;
-    }
-
-    public void setVertexes(List<Vec3d> vertexes) {
-        this.vertexes = vertexes;
-    }
-
-    public List<Face3d> getFaces() {
-        return faces;
-    }
-
-    public void setFaces(List<Face3d> faces) {
-        this.faces = faces;
     }
 }
