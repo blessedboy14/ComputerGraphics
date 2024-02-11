@@ -19,19 +19,19 @@ public class App extends JComponent implements ActionListener {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/porshe.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/teapot.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
     private Graphics graphics;
     private Mesh input;
-/*    private Timer timer = new Timer(1, this);*/
-    private double angle = 180;
+    private Timer timer = new Timer(1, this);
+    private double angle = 0;
     private Camera camera = new Camera(Matr4x4.getCameraMatrix(Matr4x4.camera(Camera.CAMERA_DISTANCE)));
     public static void main(String[] args) throws AWTException, IOException {
         BufferedImage buffer = new BufferedImage(WIDTH + 1, HEIGHT + 1, BufferedImage.TYPE_INT_RGB);
         App app = new App();
-        Listener l = new Listener();
+        Listener l = new Listener(app);
         frame = new JFrame();
         frame.setVisible(true);
         frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
@@ -50,7 +50,7 @@ public class App extends JComponent implements ActionListener {
         prev = System.currentTimeMillis();
         input = Mesh.loadMesh(App.fileName);
         repaint();
-/*        timer.start();*/
+        timer.start();
     }
 
     public Matr4x4 screenProjection =
@@ -68,6 +68,8 @@ public class App extends JComponent implements ActionListener {
     private Vec3d cameraPos = new Vec3d(0, 0, 1);
     private Vec3d lightDir = new Vec3d(0, 0, 1);
 
+    private boolean isChanged = false;
+
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
@@ -77,14 +79,14 @@ public class App extends JComponent implements ActionListener {
             frame.setTitle(String.format("%d fps", (int) (1000 / (System.currentTimeMillis() - prev))));
             prev = System.currentTimeMillis();
             java.awt.Color clr = new java.awt.Color(255, 153, 153);
-            Matr4x4 t = Matr4x4.rotationY(angle)
-                    .multiply(Matr4x4.translation(0, 0, 0))
-                    .multiply(camera.getCameraView());
+            Vec3d center = new Vec3d(0, 0, 0);
+            Matr4x4 t = camera.getCameraView();
             Matr4x4 test =  Matr4x4.rotationY(angle)
                     .multiply(Matr4x4.translation(0, 0, 0))
                     .multiply(camera.getCameraView())
-                    .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f))
+                    .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 10.0f))
                     .multiply(Matr4x4.screen(WIDTH, HEIGHT));
+            long i = 0;
             for (Triangle triangle: input.getTris()) {
                 Triangle tri = triangle.multiplyMatrix(t);
                 Vec3d[] v = tri.getPoints();
@@ -94,12 +96,21 @@ public class App extends JComponent implements ActionListener {
                 double intense = normal.Dot(lightDir);
                 if (similar >= 0) {
                     if (intense >= 0) {
+                        i++;
+                        Vec3d[] te = triangle.multiplyMatrix(t).getPoints();
+                        center = center.add(te[0]).add(te[1]).add(te[2]);
                         graphics.rasterBarycentric(triangle.multiplyMatrix(test), buffer,
                                 WIDTH, HEIGHT, new java.awt.Color((float) (clr.getRed() * intense) / 255,
                                         (float) (clr.getGreen() * intense) / 255,
                                         (float) (clr.getBlue() * intense) / 255).getRGB());
                     }
                 }
+            }
+            if (!isChanged) {
+                center = center.grade(1.0f / i / 3);
+                camera.setTarget(new Vec3d(0, center.y, 0));
+                camera.new_y = center.y;
+                isChanged = true;
             }
             g.drawImage(graphics.getBuffer(), 0, 0, null);
         }
@@ -110,8 +121,8 @@ public class App extends JComponent implements ActionListener {
 /*        repaint();*/
     }
 
-    public void onMouseDragged(double pitch, double yaw) {
-        camera.rotate(pitch, yaw);
+    public void onMouseDragged(double theta, double phi) {
+        camera.rotateCamera(theta, phi);
         repaint();
     }
 
@@ -123,4 +134,5 @@ public class App extends JComponent implements ActionListener {
         camera.updateDistance();
         repaint();
     }
+
 }

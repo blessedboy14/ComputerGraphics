@@ -136,7 +136,7 @@ public class Matr4x4 {
     public static Matr4x4 getCameraMatrix(Vec3d eye, Vec3d target, Vec3d up) {
         Vec3d zAxis = target.subtract(eye).toNormal();
         Vec3d xAxis = up.Cross(zAxis).toNormal();
-        Vec3d yAxis = up;
+        Vec3d yAxis = zAxis.Cross(xAxis).toNormal();
         return new Matr4x4(new double[][]{
                 {xAxis.x, yAxis.x, zAxis.x, 0},
                 {xAxis.y, yAxis.y, zAxis.y, 0},
