@@ -82,7 +82,7 @@ public class Listener extends MouseAdapter {
         if (lastPoint != null) {
             Point pt = e.getPoint();
             double dx = lastPoint.x - pt.x;
-            double dy = pt.y - lastPoint.y;
+            double dy = lastPoint.y - pt.y;
             lastPoint.x = pt.x;
             lastPoint.y  = pt.y;
             double angle_x = dx * sensitivity;
@@ -91,7 +91,7 @@ public class Listener extends MouseAdapter {
             cameraTheta += angle_y;
             JFrame obj = (JFrame)e.getSource();
             App t = (App)obj.getContentPane().getComponents()[0];
-            t.onMouseDragged(cameraPhi, cameraTheta);
+            t.onMouseDragged(cameraTheta, cameraPhi);
         }
     }
 
