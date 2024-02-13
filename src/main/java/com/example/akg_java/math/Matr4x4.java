@@ -133,6 +133,16 @@ public class Matr4x4 {
         });
     }
 
+    public Matr4x4 grade(double val) {
+        double[][] new_matr = new double[4][4];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                new_matr[i][j] = this.matrix[i][j] * val;
+            }
+        }
+        return new Matr4x4(new_matr);
+    }
+
     public static Matr4x4 getCameraMatrix(Vec3d eye, Vec3d target, Vec3d up) {
         Vec3d zAxis = target.subtract(eye).toNormal();
         Vec3d xAxis = up.Cross(zAxis).toNormal();

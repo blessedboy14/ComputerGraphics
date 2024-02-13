@@ -32,6 +32,13 @@ public class Triangle {
                 this.normals[0], this.normals[1], this.normals[2]);
     }
 
+    public Triangle multiplyCamera(Matr4x4 matr4x4) {
+        return new Triangle(this.points[0], this.points[1], this.points[2],
+                this.normals[0].multiply(matr4x4).toNormal(),
+                this.normals[1].multiply(matr4x4).toNormal(),
+                this.normals[2].multiply(matr4x4).toNormal());
+    }
+
     public void setPoints(Vec3d[] points) {
         this.points = points;
     }
