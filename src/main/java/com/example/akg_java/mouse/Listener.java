@@ -26,7 +26,7 @@ public class Listener extends MouseAdapter {
     private App myApp;
     double cameraPhi = Math.PI / 2;
     double cameraTheta = Math.PI / 2;
-    private final float wheel_sensitivity = 0.8f;
+    private final float wheel_sensitivity = 0.2f;
 
     @Override
     public void mousePressed(MouseEvent e) {

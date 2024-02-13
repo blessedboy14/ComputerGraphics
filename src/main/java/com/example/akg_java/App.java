@@ -10,6 +10,7 @@ import com.sun.prism.paint.Color;
 import javafx.scene.PerspectiveCamera;
 
 import javax.swing.*;
+import javax.vecmath.Matrix4f;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -19,7 +20,7 @@ public class App extends JComponent implements ActionListener {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/teapot.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/girl.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
@@ -66,7 +67,7 @@ public class App extends JComponent implements ActionListener {
     public ZBuffer buffer = new ZBuffer(WIDTH, HEIGHT);
 
     private Vec3d cameraPos = new Vec3d(0, 0, 1);
-    private Vec3d lightDir = new Vec3d(0, 0, 1);
+    private Vec3d lightDir = new Vec3d(0, 0, 1).toNormal();
 
     private boolean isChanged = false;
 
@@ -78,10 +79,12 @@ public class App extends JComponent implements ActionListener {
 /*            angle += (System.currentTimeMillis() - prev) / 1000.0 * 90;*/
             frame.setTitle(String.format("%d fps", (int) (1000 / (System.currentTimeMillis() - prev))));
             prev = System.currentTimeMillis();
-            java.awt.Color clr = new java.awt.Color(255, 153, 153);
+//            java.awt.Color clr = new java.awt.Color(255, 105, 180);
+            java.awt.Color clr = java.awt.Color.WHITE;
             Vec3d center = new Vec3d(0, 0, 0);
-            Matr4x4 t = camera.getCameraView();
-            Matr4x4 test =  Matr4x4.rotationY(angle)
+            Matr4x4 t = Matr4x4.rotationY(180)
+                    .multiply(camera.getCameraView());
+            Matr4x4 test =  Matr4x4.rotationY(180)
                     .multiply(Matr4x4.translation(0, 0, 0))
                     .multiply(camera.getCameraView())
                     .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 10.0f))
@@ -93,17 +96,22 @@ public class App extends JComponent implements ActionListener {
                 Vec3d normal = v[2].subtract(v[0]).Cross(v[1].subtract(v[0]));
                 normal.normalize();
                 double similar = normal.Dot(cameraPos);
-                double intense = normal.Dot(lightDir);
+//                double intense = Math.max(0.0f, normal.Dot(lightDir));
                 if (similar >= 0) {
-                    if (intense >= 0) {
-                        i++;
-                        Vec3d[] te = triangle.multiplyMatrix(t).getPoints();
-                        center = center.add(te[0]).add(te[1]).add(te[2]);
-                        graphics.rasterBarycentric(triangle.multiplyMatrix(test), buffer,
-                                WIDTH, HEIGHT, new java.awt.Color((float) (clr.getRed() * intense) / 255,
-                                        (float) (clr.getGreen() * intense) / 255,
-                                        (float) (clr.getBlue() * intense) / 255).getRGB());
-                    }
+/*                    if (intense > 0) {*/
+                        if (!isChanged) {
+                            i++;
+                            Vec3d[] te = triangle.multiplyMatrix(t).getPoints();
+                            center = center.add(te[0]).add(te[1]).add(te[2]);
+                        }
+//                        graphics.rasterBarycentric(triangle.multiplyMatrix(test), buffer,
+//                                WIDTH, HEIGHT, new java.awt.Color((float) (clr.getRed() * intense) / 255,
+//                                        (float) (clr.getGreen() * intense) / 255,
+//                                        (float) (clr.getBlue() * intense) / 255).getRGB());
+/*                        graphics.phongShading(triangle.multiplyMatrix(test), buffer,
+                                clr, lightDir);*/
+                        graphics.phongLight(triangle.multiplyMatrix(test), clr, lightDir, buffer, camera);
+/*                    }*/
                 }
             }
             if (!isChanged) {

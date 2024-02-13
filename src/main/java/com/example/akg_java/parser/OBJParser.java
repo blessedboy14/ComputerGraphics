@@ -15,6 +15,7 @@ import java.util.List;
 public class OBJParser {
     private String fileName;
     private List<Vec3d> vertexes_g = new ArrayList<>();
+    private List<Vec3d> normals = new ArrayList<>();
     private List<Triangle> tris = new ArrayList<>();
 
     public OBJParser(String fileName) {
@@ -42,6 +43,13 @@ public class OBJParser {
                     }
                     break;
                 }
+                case "vn": {
+                    Double[] coords = Arrays.stream(Arrays.copyOfRange(parts, 1, parts.length))
+                            .map(Double::parseDouble)
+                            .toArray(Double[]::new);
+                    normals.add(new Vec3d(coords[0], coords[1], coords[2]));
+                    break;
+                }
                 case "f": {
                     parseFace(Arrays.copyOfRange(parts, 1, parts.length));
                     break;
@@ -55,12 +63,18 @@ public class OBJParser {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(vertex -> Integer.parseInt(vertex.split("//")[0]))
                     .toArray(Integer[]::new);
-            tris.addAll(parseIntsToTriangle(g_vertexes));
+            Integer[] normals = Arrays.stream(data)
+                    .map(vertex -> Integer.parseInt(vertex.split("//")[1]))
+                    .toArray(Integer[]::new);
+            tris.addAll(parseIntsToTriangle(g_vertexes, normals));
         } else if (data[0].contains("/") && data[0].split("/").length == 3) {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(vertex -> Integer.parseInt(vertex.split("/")[0]))
                     .toArray(Integer[]::new);
-            tris.addAll(parseIntsToTriangle(g_vertexes));
+            Integer[] normals = Arrays.stream(data)
+                    .map(vertex -> Integer.parseInt(vertex.split("/")[2]))
+                    .toArray(Integer[]::new);
+            tris.addAll(parseIntsToTriangle(g_vertexes, normals));
         } else if (data[0].contains("/")) {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(vertex -> Integer.parseInt(vertex.split("/")[0]))
@@ -89,7 +103,28 @@ public class OBJParser {
         return tris;
     }
 
+    private List<Triangle> parseIntsToTriangle(Integer[] vertices, Integer[] normalz) {
+        if (vertices.length != normalz.length) {
+            throw new RuntimeException("error with obj file, vertices num doesn't meet normals num");
+        }
+        List<Triangle> tris = new ArrayList<>();
+        if (vertices.length > 3) {
+            Vec3d main = vertexes_g.get(vertices[0]-1);
+            Vec3d normal_main = normals.get(normalz[0] - 1);
+            for (int i = 1; i < vertices.length - 1; i++) {
+                tris.add(new Triangle(main, vertexes_g.get(vertices[i] - 1),
+                        vertexes_g.get(vertices[i+1] - 1),
+                        normal_main, normals.get(normalz[i] - 1), normals.get(normalz[i+1] - 1)));
+            }
+        } else {
+            tris.add(new Triangle(vertexes_g.get(vertices[0] - 1), vertexes_g.get(vertices[1] - 1),
+                    vertexes_g.get(vertices[2] - 1), normals.get(normalz[0] - 1),
+                    normals.get(normalz[1] - 1), normals.get(normalz[2] - 1)));
+        }
+        return tris;
+    }
+
     public Mesh getMesh() {
-        return new Mesh(this.vertexes_g, (ArrayList<Triangle>) this.tris);
+        return new Mesh(this.tris);
     }
 }

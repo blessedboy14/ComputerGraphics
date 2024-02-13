@@ -12,9 +12,20 @@ import java.util.List;
 public class Mesh {
     private List<Vec3d> vertexes;
     private List<Triangle> tris;
+    private List<Vec3d> normals;
 
     public Mesh(List<Vec3d> vertexes, ArrayList<Triangle> tris) {
         this.vertexes = vertexes;
+        this.tris = tris;
+    }
+
+    public Mesh(List<Vec3d> vertexes, ArrayList<Triangle> tris, List<Vec3d> normals) {
+        this.vertexes = vertexes;
+        this.tris = tris;
+        this.normals = normals;
+    }
+
+    public Mesh(List<Triangle> tris) {
         this.tris = tris;
     }
 
