@@ -61,8 +61,8 @@ public class Graphics {
         Vec3d v1 = Vec3d.vectorOfTwoPoints(a, c);
         Vec3d v2 = Vec3d.vectorOfTwoPoints(a, p);
         double d00 = v0.Dot(v0);
-        double d01 = v0.Dot(v1);
         double d11 = v1.Dot(v1);
+        double d01 = v0.Dot(v1);
         double d20 = v2.Dot(v0);
         double d21 = v2.Dot(v1);
         double denom = d00 * d11 - d01 * d01;
@@ -82,25 +82,19 @@ public class Graphics {
     }
 
     public void rasterBarycentric(Triangle input, ZBuffer bf, int width, int height, int color) {
-        Vec3d bboxmin = new Vec3d(width - 1, height - 1, 0);
-        Vec3d bboxmax = new Vec3d(0, 0, 0);
-        Vec3d clamp = new Vec3d(width - 1, height - 1, 0);
+        Vec3d[] box = calculateBox(input);
+        Vec3d minBox = box[0];
+        Vec3d maxBox = box[1];
         Vec3d[] v = input.getPoints();
-        for (int i = 0; i < 3; i++) {
-            bboxmin.x = Math.max(0, Math.min(bboxmin.x, v[i].x));
-            bboxmin.y = Math.max(0, Math.min(bboxmin.y, v[i].y));
-            bboxmax.x = Math.min(clamp.x, Math.max(bboxmax.x, v[i].x));
-            bboxmax.y = Math.min(clamp.y, Math.max(bboxmax.y, v[i].y));
-        }
         Vec3d point = new Vec3d(0, 0, 0);
-        for(point.x = (int)Math.round(bboxmin.x); point.x <= (int)Math.round(bboxmax.x); point.x++) {
-            for(point.y = (int)Math.round(bboxmin.y); point.y <= (int)Math.round(bboxmax.y); point.y++) {
-                Vec3d bc_vec = Barycentric(point, v[0], v[1], v[2]);
+        for(point.x = (int)Math.round(minBox.x); point.x <= (int)Math.round(maxBox.x); point.x++) {
+            for(point.y = (int)Math.round(minBox.y); point.y <= (int)Math.round(maxBox.y); point.y++) {
+                Vec3d bc_vec = barycentric(v, point);
                 if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
                     continue;
                 }
                 point.z = 0;
-                point.z += v[0].z*bc_vec.x + v[1].z*bc_vec.y + v[2].z*bc_vec.z;
+                point.z += v[0].z*bc_vec.x + v[1].z*bc_vec.y + v[2].z*bc_vec.z;// нахождение Z координаты с использованием интерполяции
                 if (point.z < bf.get((int)Math.round(point.x), (int)Math.round(point.y))) {
                     bf.edit((int)Math.round(point.x), (int)Math.round(point.y), point.z);
                     buffer.setRGB((int)Math.round(point.x), (int)Math.round(point.y), color);
@@ -117,7 +111,7 @@ public class Graphics {
         Vec3d point = new Vec3d(0, 0, 0);
         for(point.x = (int)Math.round(boxMin.x); point.x <= (int)Math.round(boxMax.x); point.x++) {
             for(point.y = (int)Math.round(boxMin.y); point.y <= (int)Math.round(boxMax.y); point.y++) {
-                Vec3d bc_vec = Barycentric(point, v[0], v[1], v[2]);
+                Vec3d bc_vec = barycentric(v, point);
                 if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
                     continue;
                 }
@@ -134,6 +128,10 @@ public class Graphics {
         }
     }
 
+    private void sortByY(Triangle tri) {
+        Arrays.sort(tri.getPoints(), Comparator.comparingDouble(vector -> vector.y));
+    }
+
     public void phongLight(Triangle tri, java.awt.Color base, Vec3d light, ZBuffer bf, Camera camera) {
         Vec3d[] boxes = calculateBox(tri);
         Vec3d boxMin = boxes[0];
@@ -142,7 +140,7 @@ public class Graphics {
         Vec3d point = new Vec3d(0, 0, 0);
         for(point.x = (int)Math.round(boxMin.x); point.x <= (int)Math.round(boxMax.x); point.x++) {
             for(point.y = (int)Math.round(boxMin.y); point.y <= (int)Math.round(boxMax.y); point.y++) {
-                Vec3d bc_vec = Barycentric(point, v[0], v[1], v[2]);
+                Vec3d bc_vec = barycentric(v, point);
                 if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
                     continue;
                 }
@@ -189,7 +187,7 @@ public class Graphics {
     }
 
     private Vec3d interpolate(Vec3d[] n, Vec3d bc_vec, Vec3d light, java.awt.Color base) {
-        Vec3d n_interpolated = n[0].grade(bc_vec.z).add(n[1].grade(bc_vec.x)).add(n[2].grade(bc_vec.y)).toNormal();
+        Vec3d n_interpolated = n[0].grade(bc_vec.x).add(n[1].grade(bc_vec.y)).add(n[2].grade(bc_vec.z)).toNormal();
         double intense = Math.max(0.0f, n_interpolated.Dot(light));
         return new Vec3d(base.getRed() * intense, base.getGreen() * intense, base.getBlue() * intense);
     }
