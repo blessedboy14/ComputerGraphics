@@ -1,25 +1,25 @@
 package com.example.akg_java;
 
 import com.example.akg_java.EngineUtility.Camera;
+import com.example.akg_java.EngineUtility.Graphics;
 import com.example.akg_java.EngineUtility.Mesh;
 import com.example.akg_java.EngineUtility.ZBuffer;
-import com.example.akg_java.math.*;
-import com.example.akg_java.EngineUtility.Graphics;
+import com.example.akg_java.math.Matr4x4;
+import com.example.akg_java.math.Triangle;
+import com.example.akg_java.math.Vec3d;
 import com.example.akg_java.mouse.Listener;
 import com.sun.prism.paint.Color;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.List;
 
 public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/girl.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/dress.obj";
     private static JFrame frame;
     private long prev;
     private Graphics graphics;
@@ -54,6 +54,8 @@ public class App extends JComponent {
     private Vec3d lightDir = new Vec3d(1, 0, 1).toNormal();
     private final java.awt.Color clr = new java.awt.Color(227,198,240);
 
+    private boolean isCentred = false;
+
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
@@ -66,18 +68,37 @@ public class App extends JComponent {
                     .multiply(Matr4x4.screen(WIDTH, HEIGHT));
             lightDir = camera.getEye().subtract(camera.getTarget()).toNormal();
             cameraPos = camera.getEye().subtract(camera.getTarget()).toNormal();
+            Vec3d centerVec = new Vec3d(0, 0, 0);
+            long i = 0;
             for (Triangle triangle: input.getTris()) {
                 Vec3d triNorm = triangle.getNormal().grade(-1);
-                if (!(cameraPos.Dot(triNorm) + 1.0f < 0)) {
+                if (!(cameraPos.Dot(triNorm) < 0)) {
+                    if (!isCentred) {
+                        i++;
+                        Vec3d[] v = triangle.multiplyMatrix(camera.getCameraView()).getPoints();
+                        centerVec = centerVec.add(v[0]).add(v[1]).add(v[2]);
+                    }
                     graphics.rasterize(triangle, resultMatrix, clr, lightDir);
-/*                    graphics.phongLight(triangle.multiplyMatrix(resultMatrix), clr, lightDir, zBuffer, camera);*/
-/*                    graphics.rasterWithLight(triangle, resultMatrix, clr, lightDir, camera);*/
-/*                    graphics.phongShading(triangle.multiplyMatrix(resultMatrix), zBuffer, clr, lightDir);*/
                 }
 /*                graphics.drawTriangle(triangle.multiplyMatrix(resultMatrix), clr.getRGB());*/
             }
+            if (!isCentred) {
+                centerVec = centerVec.grade(1.0f / i / 3);
+                camera.setTarget(new Vec3d(0, centerVec.y, 0));
+                camera.new_y = centerVec.y;
+                isCentred = true;
+            }
             g.drawImage(graphics.getBuffer(), 0, 0, null);
         }
+    }
+
+    private Vec3d calculateAvg(List<Triangle> tris, Matr4x4 matrix ) {
+        Vec3d center = new Vec3d(0, 0, 0);
+        for (Triangle tri: tris) {
+            Vec3d[] v = tri.multiplyMatrix(matrix).getPoints();
+            center = center.add(v[0]).add(v[1]).add(v[2]);
+        }
+        return center;
     }
 
     public void onMouseDragged(double theta, double phi) {

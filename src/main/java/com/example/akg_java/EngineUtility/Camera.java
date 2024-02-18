@@ -2,24 +2,20 @@ package com.example.akg_java.EngineUtility;
 
 import com.example.akg_java.math.Matr4x4;
 import com.example.akg_java.math.Vec3d;
-import org.joml.Quaternionf;
 
 public class Camera {
     private Matr4x4 cameraView;
     private Vec3d position;
-
-    private Vec3d target = new Vec3d(0, 60, 0);
+    public double new_y = 0;
+    private Vec3d target = new Vec3d(0, 0, 0);
     private final Vec3d up = new Vec3d(0, 1, 0);
     private Vec3d eye = new Vec3d(0, 0, CAMERA_DISTANCE);
-    public static double CAMERA_DISTANCE = 170.0f;
-    public double new_y = 0;
+    public static double CAMERA_DISTANCE = 2.0f;
     private double theta = 0;
     private double phi = 0;
-
     public Vec3d getEye() {
         return this.eye;
     }
-
     public Camera(Matr4x4 m) {
         this.cameraView = m;
         this.position = new Vec3d(0, 0, CAMERA_DISTANCE);

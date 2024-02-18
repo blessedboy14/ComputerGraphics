@@ -20,7 +20,7 @@ public class Graphics {
     private final double ambient = 0.0f;
     private final double diffuse = 0.5f;
     private final double specular = 0.5f;
-    private final double shininess = 32.0f;
+    private final double shininess = 64.0f;
     //
 
     public Graphics(BufferedImage buffer, int width, int height, ZBuffer bf, Camera cam) {
@@ -32,8 +32,8 @@ public class Graphics {
     }
 
     public void clear(int color) {
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width + 1; i++) {
+            for (int j = 0; j < height + 1; j++) {
                 buffer.setRGB(i, j, color);
             }
         }
@@ -123,7 +123,7 @@ public class Graphics {
     }
 
     public void rasterize(Triangle tri, Matr4x4 resMatrix, Color clr, Vec3d lightDir) {
-        Color pixelColor = calculateColor(tri, clr, lightDir);
+/*        Color pixelColor = calculateColor(tri, clr, lightDir);*/
         tri = tri.multiplyMatrix(resMatrix);
         Vec3d[] v = tri.getPoints();
         int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
@@ -141,7 +141,7 @@ public class Graphics {
                     if (p.z < bf.get(px, py)) {
                         bf.edit(px, py, p.z);
 /*                        Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
-/*                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir);*/
+                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir);
                         buffer.setRGB(px, py, pixelColor.getRGB());
                     }
                 }
@@ -172,36 +172,11 @@ public class Graphics {
                 (float)(Math.min(255.f, resClr.z)) / 255);
     }
 
-    public void phongLight(Triangle tri, java.awt.Color base, Vec3d light, ZBuffer bf, Camera camera) {
-        Vec3d[] boxes = calculateBox(tri);
-        Vec3d boxMin = boxes[0];
-        Vec3d boxMax = boxes[1];
-        Vec3d[] v = tri.getPoints();
-        Vec3d point = new Vec3d(0, 0, 0);
-        for(point.x = (int)Math.round(boxMin.x); point.x <= (int)Math.round(boxMax.x); point.x++) {
-            for(point.y = (int)Math.round(boxMin.y); point.y <= (int)Math.round(boxMax.y); point.y++) {
-                Vec3d bc_vec = barycentric(v, point);
-                if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
-                    continue;
-                }
-                point.z = 0;
-                point.z += v[0].z*bc_vec.x + v[1].z*bc_vec.y + v[2].z*bc_vec.z;
-                if (point.z < bf.get((int)Math.round(point.x), (int)Math.round(point.y))) {
-                    bf.edit((int)Math.round(point.x), (int)Math.round(point.y), point.z);
-                    int[] colors = calculateADS(light, base,
-                            tri.getNormals(), bc_vec, camera);
-                    buffer.setRGB((int)Math.round(point.x), (int)Math.round(point.y),
-                            colors[0]);
-                }
-            }
-        }
-    }
-
     private Vec3d reflection(Vec3d vector, Vec3d normal) {
         return vector.subtract(normal.grade(vector.Dot(normal)*2)).toNormal();
     }
 
-    private int[] calculateADS(Vec3d light, Color base, Vec3d[] n, Vec3d barycentric,
+/*    private int[] calculateADS(Vec3d light, Color base, Vec3d[] n, Vec3d barycentric,
                                Camera camera) {
         Vec3d ambient = new Vec3d(base.getRed(), base.getGreen(), base.getBlue());
         Vec3d diffuseColor = interpolate(n, barycentric, light, base);
@@ -216,42 +191,10 @@ public class Graphics {
                 (float) (Math.min(255, resultColor.y)) / 255,
                 (float) (Math.min(255, resultColor.z)) / 255).getRGB();
         return new int[] {result};
-    }
-
-    private int interpolate(Vec3d[] n, Vec3d bc_vec, java.awt.Color base, Vec3d light) {
-        Vec3d n_interpolated = n[0].grade(bc_vec.z).add(n[1].grade(bc_vec.x)).add(n[2].grade(bc_vec.y)).toNormal();
-        double intense = Math.max(0.0f, n_interpolated.Dot(light)) * this.diffuse;
-        return new java.awt.Color((float) (base.getRed() * intense) / 255,
-                (float) (base.getGreen() * intense) / 255,
-                (float) (base.getBlue() * intense) / 255).getRGB();
-    }
-
-    private Vec3d interpolate(Vec3d[] n, Vec3d bc_vec, Vec3d light, java.awt.Color base) {
-        Vec3d n_interpolated = n[0].grade(bc_vec.x).add(n[1].grade(bc_vec.y)).add(n[2].grade(bc_vec.z)).toNormal();
-        double intense = Math.max(0.0f, n_interpolated.Dot(light));
-        return new Vec3d(base.getRed() * intense, base.getGreen() * intense, base.getBlue() * intense);
-    }
-
-    private Vec3d interpolateNormal(Vec3d[] n, Vec3d bc_vec) {
-        return n[0].grade(bc_vec.z).add(n[1].grade(bc_vec.x)).add(n[2].grade(bc_vec.y)).toNormal();
-    }
+    }*/
 
     private Vec3d getPointNormal(Vec3d[] n, Vec3d bc_coords) {
         return n[0].grade(bc_coords.x).add(n[1].grade(bc_coords.y)).add(n[2].grade(bc_coords.z)).toNormal();
-    }
-
-    private Vec3d[] calculateBox(Triangle tri) {
-        Vec3d bboxmin = new Vec3d(width - 1, height - 1, 0);
-        Vec3d bboxmax = new Vec3d(0, 0, 0);
-        Vec3d clamp = new Vec3d(width - 1, height - 1, 0);
-        Vec3d[] v = tri.getPoints();
-        for (int i = 0; i < 3; i++) {
-            bboxmin.x = Math.max(0, Math.min(bboxmin.x, v[i].x));
-            bboxmin.y = Math.max(0, Math.min(bboxmin.y, v[i].y));
-            bboxmax.x = Math.min(clamp.x, Math.max(bboxmax.x, v[i].x));
-            bboxmax.y = Math.min(clamp.y, Math.max(bboxmax.y, v[i].y));
-        }
-        return new Vec3d[] {bboxmin, bboxmax};
     }
 
     public BufferedImage getBuffer() {

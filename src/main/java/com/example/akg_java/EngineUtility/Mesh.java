@@ -10,20 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Mesh {
-    private List<Vec3d> vertexes;
     private List<Triangle> tris;
-    private List<Vec3d> normals;
-
-    public Mesh(List<Vec3d> vertexes, ArrayList<Triangle> tris) {
-        this.vertexes = vertexes;
-        this.tris = tris;
-    }
-
-    public Mesh(List<Vec3d> vertexes, ArrayList<Triangle> tris, List<Vec3d> normals) {
-        this.vertexes = vertexes;
-        this.tris = tris;
-        this.normals = normals;
-    }
 
     public Mesh(List<Triangle> tris) {
         this.tris = tris;
@@ -41,14 +28,6 @@ public class Mesh {
 
     public void setTris(List<Triangle> tris) {
         this.tris = tris;
-    }
-
-    public List<Vec3d> getVertexes() {
-        return vertexes;
-    }
-
-    public void setVertexes(List<Vec3d> vertexes) {
-        this.vertexes = vertexes;
     }
 
 }
