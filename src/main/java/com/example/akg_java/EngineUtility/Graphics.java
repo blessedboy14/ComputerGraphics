@@ -14,10 +14,10 @@ public class Graphics {
     private final int height;
 
     // light params
-    private final double ambient = 0.3f;
-    private final double diffuse = 0.0f;
-    private final double specular = 1.0f;
-    private final double shininess = 2.0f;
+    private final double ambient = 0.0f;
+    private final double diffuse = 0.5f;
+    private final double specular = 0.5f;
+    private final double shininess = 32.0f;
     //
 
     public Graphics(BufferedImage buffer, int width, int height) {
@@ -167,7 +167,7 @@ public class Graphics {
         Vec3d diffuseColor = interpolate(n, barycentric, light, base);
         Vec3d pointNormal = interpolateNormal(n, barycentric);
         Vec3d reflectVector = reflection(light, pointNormal);
-        double specularStrength = Math.max(0.0f, reflectVector.Dot(camera.getEye().toNormal()));
+        double specularStrength = Math.max(0.0f, reflectVector.Dot(camera.getEye().grade(-1).toNormal()));
         specularStrength = Math.pow(specularStrength, this.shininess);
         Vec3d spec = new Vec3d(base.getRed() * specularStrength, base.getGreen() * specularStrength,
                 base.getBlue() * specularStrength);
@@ -193,7 +193,7 @@ public class Graphics {
     }
 
     private Vec3d interpolateNormal(Vec3d[] n, Vec3d bc_vec) {
-        return n[0].grade(bc_vec.z).add(n[1].grade(bc_vec.x)).add(n[2].grade(bc_vec.y)).toNormal();
+        return n[0].grade(bc_vec.x).add(n[1].grade(bc_vec.y)).add(n[2].grade(bc_vec.z)).toNormal();
     }
 
     private Vec3d[] calculateBox(Triangle tri) {

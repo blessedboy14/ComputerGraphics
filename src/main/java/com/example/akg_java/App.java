@@ -18,7 +18,7 @@ public class App extends JComponent implements ActionListener {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/light.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/girl.obj";
     private static JFrame frame;
     private Robot inputs;
     private long prev;
@@ -66,7 +66,7 @@ public class App extends JComponent implements ActionListener {
             frame.setTitle(String.format("%d fps", (int) (1000 / (System.currentTimeMillis() - prev))));
             prev = System.currentTimeMillis();
 //            java.awt.Color clr = new java.awt.Color(255, 105, 180);
-            java.awt.Color clr = new java.awt.Color(249, 166, 2);
+            java.awt.Color clr = new java.awt.Color(227,198,240);
 //            Vec3d center = new Vec3d(0, 0, 0);
             Matr4x4 t = camera.getCameraView();
             Matr4x4 test =  Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f)
@@ -86,16 +86,16 @@ public class App extends JComponent implements ActionListener {
 //                            Vec3d[] te = triangle.multiplyMatrix(t).getPoints();
 //                            center = center.add(te[0]).add(te[1]).add(te[2]);
 //                        }
-                        graphics.rasterBarycentric(triangle.multiplyMatrix(test), buffer,
+/*                        graphics.rasterBarycentric(triangle.multiplyMatrix(test), buffer,
                                 WIDTH, HEIGHT, new java.awt.Color(
                                         (float) (clr.getRed() * intense) / 255,
                                         (float) (clr.getGreen() * intense) / 255,
-                                        (float) (clr.getBlue() * intense) / 255).getRGB());
+                                        (float) (clr.getBlue() * intense) / 255).getRGB());*/
 /*                        graphics.phongShading(triangle.multiplyMatrix(test), buffer,
                                 clr, lightDir);*/
-/*                        graphics.phongLight(triangle.multiplyMatrix(test), clr, lightDir, buffer, camera);*/
-/*                    }*/
-                }
+                        graphics.phongLight(triangle.multiplyMatrix(test), clr, lightDir, buffer, camera);
+                    }
+/*                }*/
             }
 //            if (!isChanged) {
 //                center = center.grade(1.0f / i / 3);
