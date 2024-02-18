@@ -37,6 +37,14 @@ public class Vec3d {
         }
     }
 
+    public double getY() {
+        return this.y;
+    }
+
+    public double getX() {
+        return this.x;
+    }
+
     public double magnitude() {
         return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
     }
@@ -75,7 +83,7 @@ public class Vec3d {
     }
 
     public double Dot(Vec3d other) {
-        return x*other.x + y*other.y + z* other.z;
+        return x * other.x + y * other.y + z * other.z;
     }
 
     public Vec3d Cross(Vec3d other) {

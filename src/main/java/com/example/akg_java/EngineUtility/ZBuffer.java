@@ -7,14 +7,14 @@ public class ZBuffer {
     private final int width;
     public ZBuffer(int width, int height) {
         this.width = width;
-        bf = new double[width][height];
-        for (int i = 0; i < width; i++) {
+        bf = new double[width+1][height+1];
+        for (int i = 0; i < width+1; i++) {
             Arrays.fill(bf[i], Float.POSITIVE_INFINITY);
         }
     }
 
     public void drop() {
-        for (int i = 0; i < width; i++) {
+        for (int i = 0; i < width+1; i++) {
             Arrays.fill(bf[i], Float.POSITIVE_INFINITY);
         }
     }

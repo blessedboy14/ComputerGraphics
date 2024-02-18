@@ -1,29 +1,34 @@
 package com.example.akg_java.EngineUtility;
+import com.example.akg_java.math.Matr4x4;
 import com.example.akg_java.math.Triangle;
 import com.example.akg_java.math.Vec3d;
-
-import javax.naming.NameAlreadyBoundException;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 
 public class Graphics {
-    private BufferedImage buffer;
+    private final BufferedImage buffer;
     private final int width;
     private final int height;
+    private final ZBuffer bf;
+    private final Camera cam;
 
     // light params
-    private final double ambient = 0.3f;
-    private final double diffuse = 0.0f;
-    private final double specular = 1.0f;
-    private final double shininess = 2.0f;
+    private final double ambient = 0.0f;
+    private final double diffuse = 0.5f;
+    private final double specular = 0.5f;
+    private final double shininess = 32.0f;
     //
 
-    public Graphics(BufferedImage buffer, int width, int height) {
+    public Graphics(BufferedImage buffer, int width, int height, ZBuffer bf, Camera cam) {
         this.buffer = buffer;
         this.width = width;
         this.height = height;
+        this.bf = bf;
+        this.cam = cam;
     }
 
     public void clear(int color) {
@@ -34,7 +39,45 @@ public class Graphics {
         }
     }
 
-    public void DDAline(int x1, int y1, int x2, int y2, int color) {
+    private void BresenhamLine(int x1, int y1, int x2, int y2, int color) {
+        boolean steep = false;
+        if (Math.abs(x1-x2)<Math.abs(y1-y2)) {
+            int temp = x1;
+            x1 = y1;
+            y1 = temp;
+            temp = x2;
+            x2 = y2;
+            y2 = temp;
+            steep = true;
+        }
+        if (x1>x2) {
+            int temp = x1;
+            x1 = x2;
+            x2 = temp;
+            temp = y1;
+            y1 = y2;
+            y2 = temp;
+        }
+        int dx = x2-x1;
+        int dy = y2-y1;
+        int derror = Math.abs(dy)*2;
+        int error = 0;
+        int y = y1;
+        for (int x=x1; x<=x2; x++) {
+            if (steep) {
+                buffer.setRGB(y, x, color);
+            } else {
+                buffer.setRGB(x, y, color);
+            }
+            error += derror;
+            if (error > dx) {
+                y += (y2 > y1 ? 1 : -1);
+                error -= dx*2;
+            }
+        }
+    }
+
+    private void DDAline(int x1, int y1, int x2, int y2, int color) {
         double dx = (x2 - x1);
         double dy = (y2 - y1);
         double steps = Math.max(Math.abs(dx), Math.abs(dy));
@@ -51,25 +94,9 @@ public class Graphics {
 
     public void drawTriangle(Triangle tri, int color) {
         Vec3d[] v = tri.getPoints();
-        DDAline((int)v[0].x, (int)v[0].y, (int)v[1].x, (int)v[1].y, color);
-        DDAline((int)v[1].x, (int)v[1].y, (int)v[2].x, (int)v[2].y, color);
-        DDAline((int)v[2].x, (int)v[2].y, (int)v[0].x, (int)v[0].y, color);
-    }
-
-    private Vec3d Barycentric(Vec3d p, Vec3d a, Vec3d b, Vec3d c) {
-        Vec3d v0 = Vec3d.vectorOfTwoPoints(a, b);
-        Vec3d v1 = Vec3d.vectorOfTwoPoints(a, c);
-        Vec3d v2 = Vec3d.vectorOfTwoPoints(a, p);
-        double d00 = v0.Dot(v0);
-        double d11 = v1.Dot(v1);
-        double d01 = v0.Dot(v1);
-        double d20 = v2.Dot(v0);
-        double d21 = v2.Dot(v1);
-        double denom = d00 * d11 - d01 * d01;
-        double v = (d11 * d20 - d01 * d21) / denom;
-        double w = (d00 * d21 - d01 * d20) / denom;
-        double u = 1.0f - v - w;
-        return new Vec3d(v, w, u);
+        BresenhamLine((int)v[0].x, (int)v[0].y, (int)v[1].x, (int)v[1].y, color);
+        BresenhamLine((int)v[1].x, (int)v[1].y, (int)v[2].x, (int)v[2].y, color);
+        BresenhamLine((int)v[2].x, (int)v[2].y, (int)v[0].x, (int)v[0].y, color);
     }
 
     private Vec3d barycentric(Vec3d[] v, Vec3d p) {
@@ -81,55 +108,68 @@ public class Graphics {
         return new Vec3d(1.f - (u.x+u.y)/u.z, u.y/u.z, u.x/u.z);
     }
 
-    public void rasterBarycentric(Triangle input, ZBuffer bf, int width, int height, int color) {
-        Vec3d[] box = calculateBox(input);
-        Vec3d minBox = box[0];
-        Vec3d maxBox = box[1];
-        Vec3d[] v = input.getPoints();
-        Vec3d point = new Vec3d(0, 0, 0);
-        for(point.x = (int)Math.round(minBox.x); point.x <= (int)Math.round(maxBox.x); point.x++) {
-            for(point.y = (int)Math.round(minBox.y); point.y <= (int)Math.round(maxBox.y); point.y++) {
-                Vec3d bc_vec = barycentric(v, point);
-                if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
-                    continue;
-                }
-                point.z = 0;
-                point.z += v[0].z*bc_vec.x + v[1].z*bc_vec.y + v[2].z*bc_vec.z;// нахождение Z координаты с использованием интерполяции
-                if (point.z < bf.get((int)Math.round(point.x), (int)Math.round(point.y))) {
-                    bf.edit((int)Math.round(point.x), (int)Math.round(point.y), point.z);
-                    buffer.setRGB((int)Math.round(point.x), (int)Math.round(point.y), color);
-                }
-            }
-        }
+    private Color calculateFromIntense(Color base, double intense) {
+        float red = (float) (base.getRed() * intense);
+        float green = (float) (base.getGreen() * intense);
+        float blue = (float) (base.getBlue() * intense);
+        return new Color(red / 255, green / 255, blue / 255);
     }
 
-    public void phongShading(Triangle tri, ZBuffer bf, java.awt.Color baseColor, Vec3d light) {
-        Vec3d[] boxes = calculateBox(tri);
-        Vec3d boxMin = boxes[0];
-        Vec3d boxMax = boxes[1];
+    private Color calculateColor(Triangle tri, Color base, Vec3d lightDir) {
         Vec3d[] v = tri.getPoints();
-        Vec3d point = new Vec3d(0, 0, 0);
-        for(point.x = (int)Math.round(boxMin.x); point.x <= (int)Math.round(boxMax.x); point.x++) {
-            for(point.y = (int)Math.round(boxMin.y); point.y <= (int)Math.round(boxMax.y); point.y++) {
-                Vec3d bc_vec = barycentric(v, point);
-                if ((bc_vec.x < 0 || bc_vec.y < 0  || bc_vec.z < 0)) {
-                    continue;
-                }
-                point.z = 0;
-                point.z += v[0].z*bc_vec.x + v[1].z*bc_vec.y + v[2].z*bc_vec.z;
-                if (point.z < bf.get((int)Math.round(point.x), (int)Math.round(point.y))) {
-                    Vec3d colorV = interpolate(tri.getNormals(), bc_vec, light, baseColor);
-                    int color = new java.awt.Color((float) colorV.x / 255, (float)colorV.y / 255
-                            , (float)colorV.z / 255).getRGB();
-                    bf.edit((int)Math.round(point.x), (int)Math.round(point.y), point.z);
-                    buffer.setRGB((int)Math.round(point.x), (int)Math.round(point.y), color);
+        Vec3d normal = v[2].subtract(v[0]).Cross(v[1].subtract(v[0])).toNormal();
+        double intense = Math.max(0.0f, normal.Dot(lightDir.grade(-1)));
+        return calculateFromIntense(base, intense);
+    }
+
+    public void rasterize(Triangle tri, Matr4x4 resMatrix, Color clr, Vec3d lightDir) {
+        Color pixelColor = calculateColor(tri, clr, lightDir);
+        tri = tri.multiplyMatrix(resMatrix);
+        Vec3d[] v = tri.getPoints();
+        int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
+        int minX = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
+        int maxY = (int) Math.round(Math.min(height, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
+        int maxX = (int) Math.round(Math.min(width, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
+        Vec3d p = new Vec3d(0, 0, 0);
+        for (p.x = minX; p.x <= maxX; p.x++) {
+            for (p.y = minY; p.y <= maxY; p.y++) {
+                Vec3d bc_coords = barycentric(v, p);
+                if (!(bc_coords.x < 0 || bc_coords.y < 0 || bc_coords.z < 0)) {
+                    p.z = v[0].z * bc_coords.x + v[1].z * bc_coords.y + v[2].z * bc_coords.z;
+                    int px = (int)Math.round(p.x);
+                    int py = (int)Math.round(p.y);
+                    if (p.z < bf.get(px, py)) {
+                        bf.edit(px, py, p.z);
+/*                        Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
+/*                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir);*/
+                        buffer.setRGB(px, py, pixelColor.getRGB());
+                    }
                 }
             }
         }
     }
 
-    private void sortByY(Triangle tri) {
-        Arrays.sort(tri.getPoints(), Comparator.comparingDouble(vector -> vector.y));
+    private Color phongShadingColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light) {
+        Vec3d interpolatedNormal = n[0].grade(bc_coords.x)
+                .add(n[1].grade(bc_coords.y))
+                .add(n[2].grade(bc_coords.z)).toNormal();
+        double intense = Math.max(0.0f, interpolatedNormal.Dot(light));
+        return calculateFromIntense(clr, intense);
+    }
+
+    private Color phongLightColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light) {
+        Vec3d ambient = new Vec3d(clr.getRed(), clr.getGreen(), clr.getBlue());
+        Color diffuseClr = phongShadingColor(n, bc_coords, clr, light);
+        Vec3d diffuse = new Vec3d(diffuseClr.getRed(), diffuseClr.getGreen(), diffuseClr.getBlue());
+        Vec3d reflect = reflection(light, getPointNormal(n, bc_coords));
+        double sStrength = Math.pow(Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflect)), shininess);
+        Vec3d specular = new Vec3d(clr.getRed() * sStrength, clr.getGreen() * sStrength, clr.getBlue() * sStrength);
+        Vec3d resClr = ambient.grade(this.ambient)
+                .add(diffuse.grade(this.diffuse))
+                .add(specular.grade(this.specular));
+        return new Color((float)(Math.min(255.f, resClr.x))/ 255,
+                (float)(Math.min(255.f, resClr.y)) / 255,
+                (float)(Math.min(255.f, resClr.z)) / 255);
     }
 
     public void phongLight(Triangle tri, java.awt.Color base, Vec3d light, ZBuffer bf, Camera camera) {
@@ -167,7 +207,7 @@ public class Graphics {
         Vec3d diffuseColor = interpolate(n, barycentric, light, base);
         Vec3d pointNormal = interpolateNormal(n, barycentric);
         Vec3d reflectVector = reflection(light, pointNormal);
-        double specularStrength = Math.max(0.0f, reflectVector.Dot(camera.getEye().toNormal()));
+        double specularStrength = Math.max(0.0f, reflectVector.Dot(camera.getEye().grade(-1).toNormal()));
         specularStrength = Math.pow(specularStrength, this.shininess);
         Vec3d spec = new Vec3d(base.getRed() * specularStrength, base.getGreen() * specularStrength,
                 base.getBlue() * specularStrength);
@@ -194,6 +234,10 @@ public class Graphics {
 
     private Vec3d interpolateNormal(Vec3d[] n, Vec3d bc_vec) {
         return n[0].grade(bc_vec.z).add(n[1].grade(bc_vec.x)).add(n[2].grade(bc_vec.y)).toNormal();
+    }
+
+    private Vec3d getPointNormal(Vec3d[] n, Vec3d bc_coords) {
+        return n[0].grade(bc_coords.x).add(n[1].grade(bc_coords.y)).add(n[2].grade(bc_coords.z)).toNormal();
     }
 
     private Vec3d[] calculateBox(Triangle tri) {
