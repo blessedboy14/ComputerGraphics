@@ -21,7 +21,7 @@ public class Graphics {
     private final double ambient = 0.0f;
     private final double diffuse = 0.5f;
     private final double specular = 0.5f;
-    private final double shininess = 64.0f;
+    private final double shininess = 6.0f;
     //
 
     public Graphics(BufferedImage buffer, int width, int height, ZBuffer bf, Camera cam) {
@@ -173,11 +173,10 @@ public class Graphics {
                 (float)(Math.min(255.f, resClr.z)) / 255);
     }
 
-    public void tryToMakeDiffuseMap(Triangle tri, Matr4x4 matrix, BufferedImage texture, Color clr, Vec3d lightDir) {
+    public void tryToMakeDiffuseMap(Triangle tri, Matr4x4 matrix, BufferedImage diff, BufferedImage norm, BufferedImage spec,
+                                    Color clr, Vec3d lightDir) {
         tri = tri.multiplyMatrix2(matrix);
         Vec3d[] v = tri.getPoints();
-        int width = texture.getWidth();
-        int height = texture.getHeight();
         int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
         int minX = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
         int maxY = (int) Math.round(Math.min(height, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
@@ -192,17 +191,39 @@ public class Graphics {
                     int py = (int)Math.round(p.y);
                     if (p.z < bf.get(px, py)) {
                         bf.edit(px, py, p.z);
-                        /* Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
-/*                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir);*/
                         Vec3d[] t = tri.getTexturesAsVec();
-                        Vec3d uv = t[0].grade(bc_coords.x).add(t[1].grade(bc_coords.y)).add(t[2].grade(bc_coords.z));
-                        int pixelColor = texture.getRGB((int)Math.round(width * uv.x), (int)Math.round(height * (1-uv.y)));
-/*                        buffer.setRGB(px, py, pixelColor.getRGB());*/
+                        int pixelColor = applyMaps(diff, norm, spec, bc_coords, t, lightDir);
                         buffer.setRGB(px, py, pixelColor);
                     }
                 }
             }
         }
+    }
+
+    private int applyMaps(BufferedImage diffuse, BufferedImage normals, BufferedImage spec, Vec3d bc_coords, Vec3d[] t,
+                          Vec3d light) {
+        Vec3d uv = t[0].grade(bc_coords.x).add(t[1].grade(bc_coords.y)).add(t[2].grade(bc_coords.z));
+        int xCoord = (int) Math.round(diffuse.getWidth() * uv.x);
+        int yCoord = (int) Math.round(diffuse.getHeight() * (1-uv.y));
+        int normal_clr = normals.getRGB(xCoord, yCoord);
+        double red = ((normal_clr >> 16) & 0xFF) / 255.0f;
+        double green = ((normal_clr >> 8) & 0xFF) / 255.0f;
+        double blue = (normal_clr & 0xFF) / 255.0f;
+        Vec3d normal_c = new Vec3d(red, green, blue);
+        normal_c = normal_c.grade(2).subtract(new Vec3d(1, 1, 1)).toNormal();
+        double intense = Math.max(0.0f, normal_c.Dot(light));
+        int diff = diffuse.getRGB(xCoord, yCoord);
+        red = Math.min(255.0f, ((diff >> 16) & 0xFF) * intense);
+        green = Math.min(255.0f, ((diff >> 8) & 0xFF) * intense);
+        blue = Math.min(255.0f, (diff & 0xFF) * intense);
+        Vec3d resclr = new Vec3d(red, green, blue);
+        int spec_clr = spec.getRGB(xCoord, yCoord);
+        double specular_coef = Math.pow(((spec_clr >> 16) & 0xFF) / 255.0f, shininess);
+        Vec3d spec_color = new Vec3d(255, 255, 255);
+        resclr = resclr.add(spec_color.grade(specular_coef));
+        return new Color((float) Math.min(1.0f, resclr.x / 255.0f),
+            (float) Math.min(1.0f, resclr.y / 255.0f), (float) Math.min(1.0f, resclr.z / 255.0f)).getRGB();
+/*        return new Color((float) red / 255.0f, (float) green / 255.0f, (float) blue / 255.0f).getRGB();*/
     }
 
     private Vec3d reflection(Vec3d vector, Vec3d normal) {

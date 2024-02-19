@@ -48,19 +48,27 @@ public class App extends JComponent {
         app.init(buffer);
     }
 
-    private BufferedImage head;
+    private final String diff_path = "examples/Gwyn Lord of Cinder/a.tga";
+    private final String n_path = "examples/Gwyn Lord of Cinder/a_n.tga";
+    private final String s_path = "examples/Gwyn Lord of Cinder/a_s.tga";
+
+    private BufferedImage head_diffuse;
+    private BufferedImage head_normals;
+    private BufferedImage head_specular;
 
     private void init(BufferedImage buffer) throws IOException {
         graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera);
         prev = System.currentTimeMillis();
         input = Mesh.loadMesh(App.fileName);
         camera.rotateCamera(Math.PI / 2, Math.PI / 2);
-        head = tryToReadTGA();
+        head_diffuse = tryToReadTGA(diff_path);
+        head_normals = tryToReadTGA(n_path);
+        head_specular = tryToReadTGA(s_path);
         repaint();
     }
 
-    private BufferedImage tryToReadTGA() throws IOException {
-        File tgaFile = new File("examples/Gwyn Lord of Cinder/a.tga");
+    private BufferedImage tryToReadTGA(String path) throws IOException {
+        File tgaFile = new File(path);
         return ImageIO.read(tgaFile);
     }
 
@@ -93,7 +101,8 @@ public class App extends JComponent {
                         centerVec = centerVec.add(v[0]).add(v[1]).add(v[2]);
                     }
 /*                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);*/
-                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head, clr, lightDir);
+                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head_diffuse, head_normals, head_specular,
+                            clr, lightDir);
                 }
 /*                graphics.drawTriangle(triangle.multiplyMatrix(resultMatrix), clr.getRGB());*/
             }
