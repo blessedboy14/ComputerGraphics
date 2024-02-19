@@ -1,5 +1,6 @@
 package com.example.akg_java.EngineUtility;
 import com.example.akg_java.math.Matr4x4;
+import com.example.akg_java.math.Texture;
 import com.example.akg_java.math.Triangle;
 import com.example.akg_java.math.Vec3d;
 import java.awt.*;
@@ -172,26 +173,41 @@ public class Graphics {
                 (float)(Math.min(255.f, resClr.z)) / 255);
     }
 
+    public void tryToMakeDiffuseMap(Triangle tri, Matr4x4 matrix, BufferedImage texture, Color clr, Vec3d lightDir) {
+        tri = tri.multiplyMatrix2(matrix);
+        Vec3d[] v = tri.getPoints();
+        int width = texture.getWidth();
+        int height = texture.getHeight();
+        int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
+        int minX = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
+        int maxY = (int) Math.round(Math.min(height, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
+        int maxX = (int) Math.round(Math.min(width, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
+        Vec3d p = new Vec3d(0, 0, 0);
+        for (p.x = minX; p.x <= maxX; p.x++) {
+            for (p.y = minY; p.y <= maxY; p.y++) {
+                Vec3d bc_coords = barycentric(v, p);
+                if (!(bc_coords.x < 0 || bc_coords.y < 0 || bc_coords.z < 0)) {
+                    p.z = v[0].z * bc_coords.x + v[1].z * bc_coords.y + v[2].z * bc_coords.z;
+                    int px = (int)Math.round(p.x);
+                    int py = (int)Math.round(p.y);
+                    if (p.z < bf.get(px, py)) {
+                        bf.edit(px, py, p.z);
+                        /* Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
+/*                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir);*/
+                        Vec3d[] t = tri.getTexturesAsVec();
+                        Vec3d uv = t[0].grade(bc_coords.x).add(t[1].grade(bc_coords.y)).add(t[2].grade(bc_coords.z));
+                        int pixelColor = texture.getRGB((int)Math.round(width * uv.x), (int)Math.round(height * (1-uv.y)));
+/*                        buffer.setRGB(px, py, pixelColor.getRGB());*/
+                        buffer.setRGB(px, py, pixelColor);
+                    }
+                }
+            }
+        }
+    }
+
     private Vec3d reflection(Vec3d vector, Vec3d normal) {
         return vector.subtract(normal.grade(vector.Dot(normal)*2)).toNormal();
     }
-
-/*    private int[] calculateADS(Vec3d light, Color base, Vec3d[] n, Vec3d barycentric,
-                               Camera camera) {
-        Vec3d ambient = new Vec3d(base.getRed(), base.getGreen(), base.getBlue());
-        Vec3d diffuseColor = interpolate(n, barycentric, light, base);
-        Vec3d pointNormal = interpolateNormal(n, barycentric);
-        Vec3d reflectVector = reflection(light, pointNormal);
-        double specularStrength = Math.max(0.0f, reflectVector.Dot(camera.getEye().grade(-1).toNormal()));
-        specularStrength = Math.pow(specularStrength, this.shininess);
-        Vec3d spec = new Vec3d(base.getRed() * specularStrength, base.getGreen() * specularStrength,
-                base.getBlue() * specularStrength);
-        Vec3d resultColor = ambient.grade(this.ambient).add(diffuseColor.grade(this.diffuse).add(spec.grade(this.specular)));
-        int result = new java.awt.Color((float) (Math.min(255, resultColor.x)) / 255,
-                (float) (Math.min(255, resultColor.y)) / 255,
-                (float) (Math.min(255, resultColor.z)) / 255).getRGB();
-        return new int[] {result};
-    }*/
 
     private Vec3d getPointNormal(Vec3d[] n, Vec3d bc_coords) {
         return n[0].grade(bc_coords.x).add(n[1].grade(bc_coords.y)).add(n[2].grade(bc_coords.z)).toNormal();

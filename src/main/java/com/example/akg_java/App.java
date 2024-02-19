@@ -10,8 +10,14 @@ import com.example.akg_java.math.Vec3d;
 import com.example.akg_java.mouse.Listener;
 import com.sun.prism.paint.Color;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -19,7 +25,7 @@ public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/dress.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/head.obj";
     private static JFrame frame;
     private long prev;
     private Graphics graphics;
@@ -42,12 +48,20 @@ public class App extends JComponent {
         app.init(buffer);
     }
 
+    private BufferedImage head;
+
     private void init(BufferedImage buffer) throws IOException {
         graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera);
         prev = System.currentTimeMillis();
         input = Mesh.loadMesh(App.fileName);
         camera.rotateCamera(Math.PI / 2, Math.PI / 2);
+        head = tryToReadTGA();
         repaint();
+    }
+
+    private BufferedImage tryToReadTGA() throws IOException {
+        File tgaFile = new File("examples/Gwyn Lord of Cinder/a.tga");
+        return ImageIO.read(tgaFile);
     }
 
     private Vec3d cameraPos = new Vec3d(0, 0, 1).toNormal();
@@ -78,7 +92,8 @@ public class App extends JComponent {
                         Vec3d[] v = triangle.multiplyMatrix(camera.getCameraView()).getPoints();
                         centerVec = centerVec.add(v[0]).add(v[1]).add(v[2]);
                     }
-                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);
+/*                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);*/
+                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head, clr, lightDir);
                 }
 /*                graphics.drawTriangle(triangle.multiplyMatrix(resultMatrix), clr.getRGB());*/
             }

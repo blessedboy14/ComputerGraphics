@@ -1,9 +1,5 @@
 package com.example.akg_java.math;
 
-import com.example.akg_java.EngineUtility.Camera;
-
-import javax.vecmath.Quat4f;
-
 public class Matr4x4 {
     public double[][] matrix;
 
