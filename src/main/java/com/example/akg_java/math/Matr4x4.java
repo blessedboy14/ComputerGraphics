@@ -1,5 +1,9 @@
 package com.example.akg_java.math;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+
 public class Matr4x4 {
     public double[][] matrix;
 
@@ -101,6 +105,20 @@ public class Matr4x4 {
                 {0, 0, 1, 0},
                 {0, 0, -distance, 1}
         });
+    }
+
+    public Matr4x4 inverse() {
+        RealMatrix a = new Array2DRowRealMatrix(this.matrix);
+        return new Matr4x4(MatrixUtils.inverse(a).getData());
+    }
+
+    public Matr4x4 transpose() {
+        int i, j;
+        double[][] new_m = new double[4][4];
+        for (i = 0; i < 4; i++)
+            for (j = 0; j < 4; j++)
+                new_m[i][j] = this.matrix[j][i];
+        return new Matr4x4(new_m);
     }
 
     public static Matr4x4 getCameraMatrix(Matr4x4 cameraModel) {

@@ -78,6 +78,14 @@ public class Vec3d {
         return new_vector;
     }
 
+    public Vec3d saveMultiply(Matr4x4 matr) {
+        double x = this.x * matr.matrix[0][0] + this.y * matr.matrix[1][0] + this.z * matr.matrix[2][0] + this.w * matr.matrix[3][0];
+        double y = this.x * matr.matrix[0][1] + this.y * matr.matrix[1][1] + this.z * matr.matrix[2][1] + this.w * matr.matrix[3][1];
+        double z = this.x * matr.matrix[0][2] + this.y * matr.matrix[1][2] + this.z * matr.matrix[2][2] + this.w * matr.matrix[3][2];
+        double w = this.x * matr.matrix[0][3] + this.y * matr.matrix[1][3] + this.z * matr.matrix[2][3] + this.w * matr.matrix[3][3];
+        return new Vec3d(x, y, z, w);
+    }
+
     public double sqr() {
         return x*x + y*y + z*z;
     }

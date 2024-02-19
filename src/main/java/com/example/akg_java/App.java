@@ -19,18 +19,20 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.*;
 import java.util.List;
 
 public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/head.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/lord.obj";
     private static JFrame frame;
     private long prev;
     private Graphics graphics;
     public ZBuffer zBuffer = new ZBuffer(WIDTH, HEIGHT);
     private Mesh input;
+    private Map<String, BufferedImage[]> tagToPaths = new HashMap<>();
     private final Camera camera = new Camera(Matr4x4.getCameraMatrix(Matr4x4.camera(Camera.CAMERA_DISTANCE)));
     public static void main(String[] args) throws IOException {
         BufferedImage buffer = new BufferedImage(WIDTH + 1, HEIGHT + 1, BufferedImage.TYPE_INT_RGB);
@@ -48,6 +50,43 @@ public class App extends JComponent {
         app.init(buffer);
     }
 
+    private void fillTagsMap() throws IOException {
+        String base = "examples/Gwyn Lord of Cinder/";
+        String temp = "c5370_1";
+        String ext = ".png";
+        tagToPaths.put("Material__25", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "c5370_7";
+        tagToPaths.put("Material__26", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "c5370_4";
+        tagToPaths.put("Material__27", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "c5370_5";
+        tagToPaths.put("Material__28", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "c5370_2";
+        tagToPaths.put("Material__29", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "c5370_6";
+        tagToPaths.put("Material__30", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "c5370_3";
+        tagToPaths.put("Material__31", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+        temp = "WP_A_0268";
+        tagToPaths.put("Material__32", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
+                ImageIO.read(new File(base + temp + "_n" + ext)),
+                ImageIO.read(new File(base + temp + "_s" + ext))});
+    }
+
     private final String diff_path = "examples/Gwyn Lord of Cinder/a.tga";
     private final String n_path = "examples/Gwyn Lord of Cinder/a_n.tga";
     private final String s_path = "examples/Gwyn Lord of Cinder/a_s.tga";
@@ -61,10 +100,17 @@ public class App extends JComponent {
         prev = System.currentTimeMillis();
         input = Mesh.loadMesh(App.fileName);
         camera.rotateCamera(Math.PI / 2, Math.PI / 2);
-        head_diffuse = tryToReadTGA(diff_path);
+/*        head_diffuse = tryToReadTGA(diff_path);
         head_normals = tryToReadTGA(n_path);
-        head_specular = tryToReadTGA(s_path);
+        head_specular = tryToReadTGA(s_path);*/
+        fillTagsMap();
         repaint();
+    }
+
+    private void print(double[][] t) {
+        for (int i = 0; i < t.length; i++) {
+            System.out.println(Arrays.toString(t[i]));
+        }
     }
 
     private BufferedImage tryToReadTGA(String path) throws IOException {
@@ -73,8 +119,8 @@ public class App extends JComponent {
     }
 
     private Vec3d cameraPos = new Vec3d(0, 0, 1).toNormal();
-    private Vec3d lightDir = new Vec3d(1, 0, 1).toNormal();
-    private final java.awt.Color clr = new java.awt.Color(227,198,240);
+    private Vec3d lightDir = new Vec3d(0, 0, 1).toNormal();
+    private final java.awt.Color clr = new java.awt.Color(80,80,80);
 
     private boolean isCentred = false;
 
@@ -88,8 +134,9 @@ public class App extends JComponent {
             Matr4x4 resultMatrix = camera.getCameraView()
                     .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f))
                     .multiply(Matr4x4.screen(WIDTH, HEIGHT));
-            lightDir = camera.getEye().subtract(camera.getTarget()).toNormal();
-            cameraPos = camera.getEye().subtract(camera.getTarget()).toNormal();
+            lightDir = camera.getEye().toNormal();
+/*            .subtract(camera.getTarget())*/
+            cameraPos = camera.getEye().toNormal();
             Vec3d centerVec = new Vec3d(0, 0, 0);
             long i = 0;
             for (Triangle triangle: input.getTris()) {
@@ -101,14 +148,19 @@ public class App extends JComponent {
                         centerVec = centerVec.add(v[0]).add(v[1]).add(v[2]);
                     }
 /*                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);*/
-                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head_diffuse, head_normals, head_specular,
-                            clr, lightDir);
+/*                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head_diffuse, head_normals, head_specular,
+                            lightDir, clr);*/
+                    if (!triangle.getTag().isEmpty()) {
+                        graphics.tryToApplyMultiple(tagToPaths.get(triangle.getTag()), triangle, resultMatrix, lightDir, clr);
+                    } else {
+                        graphics.rasterize(triangle, resultMatrix, new java.awt.Color(227,198,240), lightDir);
+                    }
                 }
 /*                graphics.drawTriangle(triangle.multiplyMatrix(resultMatrix), clr.getRGB());*/
             }
             if (!isCentred) {
                 centerVec = centerVec.grade(1.0f / i / 3);
-                camera.setTarget(new Vec3d(0, centerVec.y, 0));
+                camera.setTarget(new Vec3d(centerVec.x, centerVec.y, 0));
                 camera.new_y = centerVec.y;
                 isCentred = true;
             }

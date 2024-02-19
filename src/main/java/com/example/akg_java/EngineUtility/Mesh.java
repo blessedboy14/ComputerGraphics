@@ -1,12 +1,8 @@
 package com.example.akg_java.EngineUtility;
-
-import com.example.akg_java.math.Face3d;
 import com.example.akg_java.math.Triangle;
-import com.example.akg_java.math.Vec3d;
 import com.example.akg_java.parser.OBJParser;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Mesh {

@@ -4,6 +4,16 @@ public class Triangle {
     private Vec3d[] points = new Vec3d[3];
     private Vec3d[] normals = new Vec3d[3];
 
+    private String tag;
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    public String getTag() {
+        return this.tag;
+    }
+
     private Texture[] textures = new Texture[3];
     public Triangle(Vec3d v1, Vec3d v2, Vec3d v3) {
         points[0] = v1;
@@ -56,6 +66,10 @@ public class Triangle {
                 new Vec3d[]{this.normals[0], this.normals[1], this.normals[2]}, new Texture[]{
                         this.textures[0], this.textures[1], this.textures[2]
         });
+    }
+
+    public Triangle saveMultiply(Matr4x4 matrix) {
+        return new Triangle(this.points[0].saveMultiply(matrix), this.points[1].saveMultiply(matrix), this.points[2].saveMultiply(matrix));
     }
 
     public Triangle multiplyCamera(Matr4x4 matr4x4) {

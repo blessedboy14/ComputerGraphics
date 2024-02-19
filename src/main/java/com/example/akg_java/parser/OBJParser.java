@@ -19,6 +19,9 @@ public class OBJParser {
     private List<Texture> textures = new ArrayList<>();
     private List<Vec3d> normals = new ArrayList<>();
     private List<Triangle> tris = new ArrayList<>();
+    private List<String> tags = new ArrayList<>();
+    private String prev_tag = "";
+    private String cur_tag = "";
 
     public OBJParser(String fileName) {
         this.fileName = fileName;
@@ -32,6 +35,15 @@ public class OBJParser {
             String line = reader.readLine();
             String[] parts = line.split(" +");
             switch (parts[0]) {
+                case "usemtl":
+                {
+                    if (parts[1].startsWith("Mat")) {
+                        cur_tag = parts[1];
+                        prev_tag = cur_tag;
+                        tags.add(cur_tag);
+                    }
+                    break;
+                }
                 case "vt": {
                     Double[] coords = Arrays.stream(Arrays.copyOfRange(parts, 1, parts.length))
                             .map(Double::parseDouble)
@@ -94,7 +106,6 @@ public class OBJParser {
                     .map(vertex -> Integer.parseInt(vertex.split("/")[1]))
                     .toArray(Integer[]::new);
             tris.addAll(parseIntsToTriangle(g_vertexes, textures, null));
-/*            tris.addAll(parseIntsToTriangle(g_vertexes));*/
         } else {
             Integer[] g_vertexes = Arrays.stream(data)
                     .map(Integer::parseInt)
@@ -136,6 +147,9 @@ public class OBJParser {
                     vertexes_g.get(vertices[2] - 1), normals.get(normalz[0] - 1),
                     normals.get(normalz[1] - 1), normals.get(normalz[2] - 1)));
         }
+        for (Triangle tri: tris) {
+            tri.setTag(cur_tag);
+        }
         return tris;
     }
 
@@ -169,6 +183,9 @@ public class OBJParser {
                     new Texture[]{this.textures.get(textures[0] - 1),
                             this.textures.get(textures[1]-1),
                             this.textures.get(textures[2]-1)}));
+        }
+        for (Triangle tri: tris) {
+            tri.setTag(cur_tag);
         }
         return tris;
     }
