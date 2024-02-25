@@ -44,11 +44,24 @@ public class OBJParser {
                     }
                     break;
                 }
+                case "#":
+                {
+                    if (parts.length > 1 && parts[1].equals("object")) {
+                        cur_tag = parts[2];
+                        prev_tag = cur_tag;
+                        tags.add(cur_tag);
+                    }
+                    break;
+                }
                 case "vt": {
                     Double[] coords = Arrays.stream(Arrays.copyOfRange(parts, 1, parts.length))
                             .map(Double::parseDouble)
                             .toArray(Double[]::new);
-                    textures.add(new Texture(coords[0], coords[1], coords[2]));
+                    if (coords.length == 3) {
+                        textures.add(new Texture(coords[0], coords[1], coords[2]));
+                    } else {
+                        textures.add(new Texture(coords[0], coords[1]));
+                    }
                     break;
                 }
                 case "vn": {

@@ -16,9 +16,9 @@ public class Graphics {
 
     // light params
     private final double ambient = 0.0f;
-    private final double diffuse = 0.5f;
-    private final double specular = 0.5f;
-    private final double shininess = 32.0f;
+    private final double diffuse = 0.9f;
+    private final double specular = 0.1f;
+    private final double shininess = 20.0f;
     //
 
     public Graphics(BufferedImage buffer, int width, int height, ZBuffer bf, Camera cam) {
@@ -98,11 +98,11 @@ public class Graphics {
     }
 
     private Vec3d barycentric(Vec3d[] v, Vec3d p) {
-        Vec3d u = new Vec3d(v[2].x- v[0].x, v[1].x - v[0].x, v[0].x - p.x)
-                .Cross(new Vec3d(v[2].y- v[0].y, v[1].y - v[0].y, v[0].y - p.y));
-        if (Math.abs(u.z) < 1) {
+        Vec3d u = new Vec3d(v[2].x - v[0].x, v[1].x - v[0].x, v[0].x - p.x)
+                .Cross(new Vec3d(v[2].y - v[0].y, v[1].y - v[0].y, v[0].y - p.y));
+/*        if (Math.abs(u.z) < 1) {
             return new Vec3d(-1, -1, -1);
-        }
+        }*/
         return new Vec3d(1.f - (u.x+u.y)/u.z, u.y/u.z, u.x/u.z);
     }
 
@@ -189,7 +189,8 @@ public class Graphics {
                     if (p.z < bf.get(px, py)) {
                         bf.edit(px, py, p.z);
                         Vec3d[] t = tri.getTexturesAsVec();
-                        int pixelColor = applyMaps(diff, norm, spec, bc_coords, t, lightDir, tri.getNormals(), clr);
+                        int pixelColor = applyMaps(diff, norm, spec, bc_coords, t, lightDir, tri.getNormals(), clr,
+                                tri.getPoints());
                         buffer.setRGB(px, py, pixelColor);
                     }
                 }
@@ -200,10 +201,10 @@ public class Graphics {
     public void tryToApplyMultiple(BufferedImage[] textures, Triangle tri, Matr4x4 matrix, Vec3d light, Color clr) {
         tri = tri.multiplyMatrix2(matrix);
         Vec3d[] v = tri.getPoints();
-        int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
-        int minX = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
-        int maxY = (int) Math.round(Math.min(height, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
-        int maxX = (int) Math.round(Math.min(width, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
+        int minY = (int) Math.floor(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
+        int minX = (int) Math.floor(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
+        int maxY = (int) Math.ceil(Math.min(height, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
+        int maxX = (int) Math.ceil(Math.min(width, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
         Vec3d p = new Vec3d(0, 0, 0);
         for (p.x = minX; p.x <= maxX; p.x++) {
             for (p.y = minY; p.y <= maxY; p.y++) {
@@ -226,19 +227,31 @@ public class Graphics {
 
     private int applyMaps(BufferedImage diffuse, BufferedImage normal, BufferedImage spec, Vec3d bc_coords, Vec3d[] t,
                           Vec3d light, Vec3d[] n, Vec3d[] p, Color clr) {
-        Vec3d uv = t[0].grade(bc_coords.x).add(t[1].grade(bc_coords.y)).add(t[2].grade(bc_coords.z));
+        Vec3d uv = t[0].grade(bc_coords.x / p[0].z)
+                .add(t[1].grade(bc_coords.y / p[1].z))
+                .add(t[2].grade(bc_coords.z / p[2].z))
+                .grade( 1 / (bc_coords.x / p[0].z + bc_coords.y / p[1].z + bc_coords.z / p[2].z));
         uv.x = (uv.x < 0 ? (Math.abs(uv.x) % 1.0f) : uv.x % 1.0f);
-        uv.y = 1 - (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
-        double intense = applyNormalMap(normal, uv, light, p, getPointNormal(n, bc_coords), t);
+/*        uv.y = 1 - (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);*/
+        uv.y = (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
+        double intense = 1;
+        if (normal != null) {
+            intense = applyNormalMap(normal, uv, light, p, getPointNormal(n, bc_coords), t);
+        }
         Vec3d resClr = applyDiffuseMap(diffuse, uv, intense);
-        Vec3d specClr = applySpecularMap(spec, uv, light, n, bc_coords, clr).grade(0.2f);
-        resClr = resClr.add(specClr);
-        return new Color((float) Math.min(1.0f, (5 + resClr.x) / 255.0f),
-                (float) Math.min(1.0f, (5 + resClr.y) / 255.0f), (float) Math.min(1.0f, (5 + resClr.z) / 255.0f)).getRGB();
+        if (spec != null) {
+            Vec3d specClr = applySpecularMap(spec, uv, light, n, bc_coords, clr).grade(0.2f);
+            resClr = resClr.add(specClr);
+        }
+        return new Color((float) Math.min(1.0f, (resClr.x) / 255.0f),
+                (float) Math.min(1.0f, (resClr.y) / 255.0f), (float) Math.min(1.0f, (resClr.z) / 255.0f)).getRGB();
     }
     private int applyMaps(BufferedImage diffuse, BufferedImage normal, BufferedImage spec, Vec3d bc_coords, Vec3d[] t,
-                      Vec3d light, Vec3d[] n, Color clr) {
-        Vec3d uv = t[0].grade(bc_coords.x).add(t[1].grade(bc_coords.y)).add(t[2].grade(bc_coords.z));
+                      Vec3d light, Vec3d[] n, Color clr, Vec3d[] p) {
+        Vec3d uv = t[0].grade(bc_coords.x / p[0].z)
+                .add(t[1].grade(bc_coords.y / p[1].z))
+                .add(t[2].grade(bc_coords.z / p[2].z))
+                .grade( 1 / (bc_coords.x / p[0].z + bc_coords.y / p[1].z + bc_coords.z / p[2].z));
         uv.x = 1 - (uv.x < 0? 1-(Math.abs(uv.x) % 1.0f) : uv.x % 1.0f);
         uv.y = 1 - (uv.y < 0? 1-(Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
         double intense = applyNormalMap(normal, uv, light);

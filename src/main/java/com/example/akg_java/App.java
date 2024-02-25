@@ -12,27 +12,22 @@ import com.sun.prism.paint.Color;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_LAB1_OBJ_PARSER/objs/lord.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/girl.obj";
     private static JFrame frame;
     private long prev;
     private Graphics graphics;
     public ZBuffer zBuffer = new ZBuffer(WIDTH, HEIGHT);
     private Mesh input;
-    private Map<String, BufferedImage[]> tagToPaths = new HashMap<>();
+    private final Map<String, BufferedImage[]> tagToPaths = new HashMap<>();
     private final Camera camera = new Camera(Matr4x4.getCameraMatrix(Matr4x4.camera(Camera.CAMERA_DISTANCE)));
     public static void main(String[] args) throws IOException {
         BufferedImage buffer = new BufferedImage(WIDTH + 1, HEIGHT + 1, BufferedImage.TYPE_INT_RGB);
@@ -50,7 +45,7 @@ public class App extends JComponent {
         app.init(buffer);
     }
 
-    private void fillTagsMap() throws IOException {
+/*    private void fillTagsMap() throws IOException {
         String base = "examples/Gwyn Lord of Cinder/";
         String temp = "c5370_1";
         String ext = ".png";
@@ -85,6 +80,246 @@ public class App extends JComponent {
         tagToPaths.put("Material__32", new BufferedImage[]{ImageIO.read(new File(base + temp + ext)),
                 ImageIO.read(new File(base + temp + "_n" + ext)),
                 ImageIO.read(new File(base + temp + "_s" + ext))});
+    }*/
+
+    private void fillTagsMap() throws IOException {
+        String base = "examples/girl/";
+        String d = "cw_face_00_00_00.bmp";
+        String n = "cw_n_none.bmp";
+        String s = "cw_s_face_00_00.bmp";
+        tagToPaths.put("cw_O_face_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_bura_00_d_00.tga";
+        n = "cw_s_bura_00_00.bmp";
+        s = "cw_n_none.bmp";
+        tagToPaths.put("P_buraN_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_syatu_00_d_00.tga";
+        n = "cw_n_syatu_00.bmp";
+        s = "cw_s_syatu_00_d.bmp";
+        tagToPaths.put("P_ssyatu_00_d_u_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_syatu_00_d_00.tga";
+        n = "cw_n_syatu_00.bmp";
+        s = "cw_s_syatu_00_d.bmp";
+        tagToPaths.put("P_ssbotan_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_syatu_00_d_00.tga";
+        n = "cw_n_syatu_00.bmp";
+        s = "cw_s_syatu_00_d.bmp";
+        tagToPaths.put("P_ssbotan_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_ribon_00.bmp";
+        n = "cw_n_ribon_00.bmp";
+        s = "cw_s_ribon_00.bmp";
+        tagToPaths.put("P_ribonS_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_syatu_00_d_00.tga";
+        n = "cw_n_syatu_00.bmp";
+        s = "cw_s_syatu_00_d.bmp";
+        tagToPaths.put("P_ssyatu_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_pskirt_00_d_00.tga";
+        n = "cw_n_none.bmp";
+        s = "cw_s_sskirt_00_d_00.bmp";
+        tagToPaths.put("P_skirtp_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_pskirt_00_d_00.tga";
+        n = "cw_n_none.bmp";
+        s = "cw_s_sskirt_00_d_00.bmp";
+        tagToPaths.put("P_skirtp_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_pskirt_00_d_00.tga";
+        n = "cw_n_none.bmp";
+        s = "cw_s_sskirt_00_d_00.bmp";
+        tagToPaths.put("P_skirtp_00_d_u_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_highsox_00.bmp";
+        n = "cw_n_highsox_00.bmp";
+        s = "cw_s_highsox_00.bmp";
+        tagToPaths.put("P_soxH_00_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_kutu_lowfa_01.jpg";
+        n = "cw_n_none.bmp";
+        s = "cw_s_kutu_lowfa_01.bmp";
+        tagToPaths.put("P_kutuR_00_d_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_tume_00_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_s_tume_00_00.bmp";
+        tagToPaths.put("P_wbody_00_00_4", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_tikubi_00_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_s_tikubi_00_00.bmp";
+        tagToPaths.put("P_wbody_00_00_3", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_tikubi_00_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_s_tikubi_00_00.bmp";
+        tagToPaths.put("P_wbody_00_00_2", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_body_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_body_s_00_00.bmp";
+        tagToPaths.put("P_wbody_00_00_1", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_bodyude_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_s_body_00_01.bmp";
+        tagToPaths.put("P_wbody_00_00_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_kmnpb_00_00.tga";
+        n = "cw_n_kmnpb_00.bmp";
+        s = "cw_s_kmnpb_00.bmp";
+        tagToPaths.put("P_kmnpb_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_eyekage_.tga";
+        n = "cw_eyekage_.tga";
+        s = "cw_eyekage_.tga";
+        tagToPaths.put("cw_O_eyekage_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_eyehikari_.tga";
+        n = "cw_eyehikari_.tga";
+        s = "cw_eyehikari_.tga";
+        tagToPaths.put("cw_O_eyehikari_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_eye_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_s_eye_00.bmp";
+        tagToPaths.put("cw_O_eye_L_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_eye_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_s_eye_00.bmp";
+        tagToPaths.put("cw_O_eye_R_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_hairbase_00_00.tga";
+        n = "cw_n_none.bmp";
+        s = "cw_t_hairbase_sp.bmp";
+        tagToPaths.put("cw_O_hairbase_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_ha_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_ha_00.bmp";
+        tagToPaths.put("cw_O_ha_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_t_sita.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_t_sitatekari.bmp";
+        tagToPaths.put("cw_O_sita_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_mayuge_00_00.tga";
+        n = "cw_n_none.bmp";
+        s = "cw_s_mayuge_00_00.bmp";
+        tagToPaths.put("cw_O_mayuge_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_matuge_00.tga";
+        n = "cw_matuge_00.tga";
+        s = "cw_matuge_00.tga";
+        tagToPaths.put("cw_O_matuge_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_04_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_kiwa_kana_ver00_00_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_03_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_back_kana_ver01_00_1", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_02_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_back_kana_ver01_00_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_01_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_back_kana_ver00_01_2", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_02_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_back_kana_ver00_01_1", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_03_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_back_kana_ver00_01_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_02_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "cw_hair_00_02_00_sp.bmp";
+        tagToPaths.put("O_hair_back_kana_ver00_00_2", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_03_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "cw_hair_00_03_00_sp.bmp";
+        tagToPaths.put("O_hair_back_kana_ver00_00_1", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_01_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "cw_hair_00_01_00_sp.bmp";
+        tagToPaths.put("O_hair_back_kana_ver00_00_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_00_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "hair_black_dummy.bmp";
+        tagToPaths.put("O_hair_front_kana_ver00_01_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_hair_00_00_00.tga";
+        n = "hair_black_dummy.bmp";
+        s = "cw_hair_00_00_00_sp.bmp";
+        tagToPaths.put("O_hair_front_kana_ver00_00_0", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
+        d = "cw_unc_pussy.tga";
+        tagToPaths.put("P_wbody_00_00_6", new BufferedImage[]{ImageIO.read(new File(base + d)), null, null});
+        d = "cw_t_body_00.bmp";
+        n = "cw_n_none.bmp";
+        s = "cw_body_s_00_00.bmp";
+        tagToPaths.put("P_wbody_00_00_5", new BufferedImage[]{ImageIO.read(new File(base + d)),
+                ImageIO.read(new File(base + n)),
+                ImageIO.read(new File(base + s))});
     }
 
     private final String diff_path = "examples/Gwyn Lord of Cinder/a.tga";
@@ -94,6 +329,7 @@ public class App extends JComponent {
     private BufferedImage head_diffuse;
     private BufferedImage head_normals;
     private BufferedImage head_specular;
+    private BufferedImage cube;
 
     private void init(BufferedImage buffer) throws IOException {
         graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera);
@@ -103,13 +339,14 @@ public class App extends JComponent {
 /*        head_diffuse = tryToReadTGA(diff_path);
         head_normals = tryToReadTGA(n_path);
         head_specular = tryToReadTGA(s_path);*/
+/*        cube = tryToReadTGA("examples\\cube.jpg");*/
         fillTagsMap();
         repaint();
     }
 
     private void print(double[][] t) {
-        for (int i = 0; i < t.length; i++) {
-            System.out.println(Arrays.toString(t[i]));
+        for (double[] doubles : t) {
+            System.out.println(Arrays.toString(doubles));
         }
     }
 
@@ -118,9 +355,9 @@ public class App extends JComponent {
         return ImageIO.read(tgaFile);
     }
 
-    private Vec3d cameraPos = new Vec3d(0, 0, 1).toNormal();
+    private Vec3d cameraPos = new Vec3d(0, 0, -1).toNormal();
     private Vec3d lightDir = new Vec3d(0, 0, 1).toNormal();
-    private final java.awt.Color clr = new java.awt.Color(80,80,80);
+    private final java.awt.Color clr = new java.awt.Color(37,29,22);
 
     private boolean isCentred = false;
 
@@ -134,14 +371,15 @@ public class App extends JComponent {
             Matr4x4 resultMatrix = camera.getCameraView()
                     .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f))
                     .multiply(Matr4x4.screen(WIDTH, HEIGHT));
-            lightDir = camera.getEye().toNormal();
+            lightDir = camera.getEye().subtract(camera.getTarget()).toNormal();
 /*            .subtract(camera.getTarget())*/
-            cameraPos = camera.getEye().toNormal();
+/*            cameraPos = camera.getEye().subtract(camera.getTarget()).toNormal();*/
             Vec3d centerVec = new Vec3d(0, 0, 0);
             long i = 0;
             for (Triangle triangle: input.getTris()) {
                 Vec3d triNorm = triangle.getNormal().grade(-1);
-                if (!(cameraPos.Dot(triNorm) < 0)) {
+                cameraPos = camera.getEye().subtract(triangle.getPoints()[0]).toNormal();
+                if (!(cameraPos.Dot(triNorm) < 0.0f)) {
                     if (!isCentred) {
                         i++;
                         Vec3d[] v = triangle.multiplyMatrix(camera.getCameraView()).getPoints();
@@ -150,31 +388,23 @@ public class App extends JComponent {
 /*                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);*/
 /*                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head_diffuse, head_normals, head_specular,
                             lightDir, clr);*/
-                    if (!triangle.getTag().isEmpty()) {
+                    if (!triangle.getTag().isEmpty() && tagToPaths.containsKey(triangle.getTag())) {
                         graphics.tryToApplyMultiple(tagToPaths.get(triangle.getTag()), triangle, resultMatrix, lightDir, clr);
                     } else {
-                        graphics.rasterize(triangle, resultMatrix, new java.awt.Color(227,198,240), lightDir);
+                        graphics.rasterize(triangle, resultMatrix, new java.awt.Color(227, 198, 240), lightDir);
                     }
                 }
 /*                graphics.drawTriangle(triangle.multiplyMatrix(resultMatrix), clr.getRGB());*/
             }
             if (!isCentred) {
                 centerVec = centerVec.grade(1.0f / i / 3);
+                centerVec.y -= centerVec.y / 4;
                 camera.setTarget(new Vec3d(centerVec.x, centerVec.y, 0));
                 camera.new_y = centerVec.y;
                 isCentred = true;
             }
             g.drawImage(graphics.getBuffer(), 0, 0, null);
         }
-    }
-
-    private Vec3d calculateAvg(List<Triangle> tris, Matr4x4 matrix ) {
-        Vec3d center = new Vec3d(0, 0, 0);
-        for (Triangle tri: tris) {
-            Vec3d[] v = tri.multiplyMatrix(matrix).getPoints();
-            center = center.add(v[0]).add(v[1]).add(v[2]);
-        }
-        return center;
     }
 
     public void onMouseDragged(double theta, double phi) {
