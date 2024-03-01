@@ -57,15 +57,27 @@ public class Triangle {
     }
 
     public Triangle multiplyMatrix(Matr4x4 matrix) {
-        return new Triangle(this.points[0].multiply(matrix), this.points[1].multiply(matrix), this.points[2].multiply(matrix),
+        Vec3d p0 = this.points[0].multiply(matrix);
+        Vec3d p1 = this.points[1].multiply(matrix);
+        Vec3d p2 = this.points[2].multiply(matrix);
+        p0.weight();p1.weight();p2.weight();
+        return new Triangle(p0, p1, p2,
                 this.normals[0], this.normals[1], this.normals[2]);
     }
 
     public Triangle multiplyMatrix2(Matr4x4 matrix) {
-        return new Triangle(this.points[0].multiply(matrix), this.points[1].multiply(matrix), this.points[2].multiply(matrix),
-                new Vec3d[]{this.normals[0], this.normals[1], this.normals[2]}, new Texture[]{
-                        this.textures[0], this.textures[1], this.textures[2]
-        });
+        Vec3d p0 = this.points[0].multiply(matrix);
+        Vec3d p1 = this.points[1].multiply(matrix);
+        Vec3d p2 = this.points[2].multiply(matrix);
+        p0.weight();p1.weight();p2.weight();
+        return new Triangle(p0, p1, p2,
+                new Vec3d[]{this.normals[0], this.normals[1], this.normals[2]},
+                new Texture[]{
+                        this.textures[0],
+                        this.textures[1],
+                        this.textures[2]
+                }
+        );
     }
 
     public Triangle saveMultiply(Matr4x4 matrix) {

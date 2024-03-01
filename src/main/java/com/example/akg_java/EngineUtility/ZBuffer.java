@@ -13,17 +13,17 @@ public class ZBuffer {
         }
     }
 
-    public void drop() {
+    public synchronized void drop() {
         for (int i = 0; i < width+1; i++) {
             Arrays.fill(bf[i], Float.POSITIVE_INFINITY);
         }
     }
 
-    public void edit(int x, int y, double val) {
+    public synchronized void edit(int x, int y, double val) {
         this.bf[x][y] = val;
     }
 
-    public double get(int x, int y) {
+    public synchronized double get(int x, int y) {
         return this.bf[x][y];
     }
 

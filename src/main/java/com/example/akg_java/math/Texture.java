@@ -23,4 +23,16 @@ public class Texture {
         this.w = 0;
     }
 
+    public Texture divide(double val) {
+        return new Texture(this.u / val, this.v / val, 1.0f / val);
+    }
+
+    public Texture grade(double val) { return new Texture(this.u * val, this.v * val, this.w * val); }
+
+    public Texture add(Texture o) { return new Texture(this.u + o.u, this.v + o.v, this.w + o.w); }
+
+    public Vec3d toVec() {
+        return new Vec3d(this.u, this.v, this.w);
+    }
+
 }

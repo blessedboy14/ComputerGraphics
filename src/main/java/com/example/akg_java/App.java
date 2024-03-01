@@ -21,7 +21,7 @@ public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/girl.obj";
+    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/mancubus.obj";
     private static JFrame frame;
     private long prev;
     private Graphics graphics;
@@ -332,21 +332,28 @@ public class App extends JComponent {
     private BufferedImage cube;
 
     private void init(BufferedImage buffer) throws IOException {
-        graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera);
+        graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera, false);
         prev = System.currentTimeMillis();
+        cube = tryToReadTGA("examples\\cube.jpg");
         input = Mesh.loadMesh(App.fileName);
         camera.rotateCamera(Math.PI / 2, Math.PI / 2);
-/*        head_diffuse = tryToReadTGA(diff_path);
+        head_diffuse = tryToReadTGA(diff_path);
         head_normals = tryToReadTGA(n_path);
-        head_specular = tryToReadTGA(s_path);*/
-/*        cube = tryToReadTGA("examples\\cube.jpg");*/
-        fillTagsMap();
+        head_specular = tryToReadTGA(s_path);
+/*        fillTagsMap();*/
         repaint();
     }
 
-    private void print(double[][] t) {
-        for (double[] doubles : t) {
-            System.out.println(Arrays.toString(doubles));
+    private void printPixels(BufferedImage map) {
+        for (int i = 0; i < map.getWidth(); i++) {
+            for (int j = 0; j < map.getHeight(); j++) {
+                int color = map.getRGB(i, j);
+                double red = ((color >> 16) & 0xFF) / 255.0f;
+                double green = ((color >> 8) & 0xFF) / 255.0f;
+                double blue = (color & 0xFF) / 255.0f;
+                System.out.print(red + " " + green + " " + blue + " | ");
+            }
+            System.out.println();
         }
     }
 
@@ -357,27 +364,27 @@ public class App extends JComponent {
 
     private Vec3d cameraPos = new Vec3d(0, 0, -1).toNormal();
     private Vec3d lightDir = new Vec3d(0, 0, 1).toNormal();
-    private final java.awt.Color clr = new java.awt.Color(37,29,22);
+    private final java.awt.Color clr = new java.awt.Color(80, 80, 80);
 
     private boolean isCentred = false;
 
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
+            prev = System.currentTimeMillis();
             zBuffer.drop();
             graphics.clear(Color.BLACK.getIntArgbPre());
-            frame.setTitle(String.format("%d fps", (int) (1000 / (System.currentTimeMillis() - prev))));
-            prev = System.currentTimeMillis();
             Matr4x4 resultMatrix = camera.getCameraView()
                     .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f))
                     .multiply(Matr4x4.screen(WIDTH, HEIGHT));
-            lightDir = camera.getEye().subtract(camera.getTarget()).toNormal();
+/*            lightDir = camera.getEye().subtract(camera.getTarget()).toNormal();*/
 /*            .subtract(camera.getTarget())*/
 /*            cameraPos = camera.getEye().subtract(camera.getTarget()).toNormal();*/
             Vec3d centerVec = new Vec3d(0, 0, 0);
             long i = 0;
             for (Triangle triangle: input.getTris()) {
                 Vec3d triNorm = triangle.getNormal().grade(-1);
+                lightDir = camera.getEye().subtract(triangle.getPoints()[0]).toNormal();
                 cameraPos = camera.getEye().subtract(triangle.getPoints()[0]).toNormal();
                 if (!(cameraPos.Dot(triNorm) < 0.0f)) {
                     if (!isCentred) {
@@ -385,16 +392,21 @@ public class App extends JComponent {
                         Vec3d[] v = triangle.multiplyMatrix(camera.getCameraView()).getPoints();
                         centerVec = centerVec.add(v[0]).add(v[1]).add(v[2]);
                     }
-/*                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);*/
-/*                    graphics.tryToMakeDiffuseMap(triangle, resultMatrix, head_diffuse, head_normals, head_specular,
-                            lightDir, clr);*/
-                    if (!triangle.getTag().isEmpty() && tagToPaths.containsKey(triangle.getTag())) {
-                        graphics.tryToApplyMultiple(tagToPaths.get(triangle.getTag()), triangle, resultMatrix, lightDir, clr);
-                    } else {
+                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);
+/*                    graphics.textureTriangle(triangle, resultMatrix,
+                            new BufferedImage[] {cube, null, null},
+                            lightDir
+                    );*/
+/*                    if (!triangle.getTag().isEmpty() && !Objects.equals(triangle.getTag(), "P_ssyatu_00_d_0") &&
+                            !Objects.equals(triangle.getTag(), "P_ssyatu_00_d_u_0") && !Objects.equals(triangle.getTag(), "P_buraN_d_0")) {*/
+/*                    if (!triangle.getTag().isEmpty() && tagToPaths.containsKey(triangle.getTag())) {
+                        graphics.textureTriangle(triangle, resultMatrix, tagToPaths.get(triangle.getTag()), lightDir);*/
+/*                        graphics.tryToApplyMultiple(tagToPaths.get(triangle.getTag()), triangle, resultMatrix, lightDir, clr);*/
+/*                    } else {
                         graphics.rasterize(triangle, resultMatrix, new java.awt.Color(227, 198, 240), lightDir);
-                    }
+                    }*/
+/*                    }*/
                 }
-/*                graphics.drawTriangle(triangle.multiplyMatrix(resultMatrix), clr.getRGB());*/
             }
             if (!isCentred) {
                 centerVec = centerVec.grade(1.0f / i / 3);
@@ -404,7 +416,13 @@ public class App extends JComponent {
                 isCentred = true;
             }
             g.drawImage(graphics.getBuffer(), 0, 0, null);
+            long curr = System.currentTimeMillis() - prev;
+            frame.setTitle(String.format("%d millis to draw", curr));
         }
+    }
+
+    public void paintAll() {
+
     }
 
     public void onMouseDragged(double theta, double phi) {

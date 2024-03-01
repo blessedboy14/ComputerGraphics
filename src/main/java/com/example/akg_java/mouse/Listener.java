@@ -1,12 +1,11 @@
 package com.example.akg_java.mouse;
 
-import com.example.akg_java.App;
 import com.github.strikerx3.jxinput.XInputAxes;
 import com.github.strikerx3.jxinput.XInputButtons;
 import com.github.strikerx3.jxinput.XInputComponents;
 import com.github.strikerx3.jxinput.XInputDevice;
 import com.github.strikerx3.jxinput.exceptions.XInputNotLoadedException;
-
+import com.example.akg_java.App;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;

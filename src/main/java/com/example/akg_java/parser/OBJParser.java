@@ -196,6 +196,8 @@ public class OBJParser {
                     new Texture[]{this.textures.get(textures[0] - 1),
                             this.textures.get(textures[1]-1),
                             this.textures.get(textures[2]-1)}));
+/*            tris.add(new Triangle(vertexes_g.get(vertices[0] - 1), vertexes_g.get(vertices[1] - 1),
+                    vertexes_g.get(vertices[2] - 1)));*/
         }
         for (Triangle tri: tris) {
             tri.setTag(cur_tag);

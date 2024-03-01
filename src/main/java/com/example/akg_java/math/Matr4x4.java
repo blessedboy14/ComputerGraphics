@@ -168,32 +168,4 @@ public class Matr4x4 {
                 {-eye.Dot(xAxis), -eye.Dot(yAxis), -eye.Dot(zAxis), 1}
         });
     }
-
-    public static Matr4x4 cameraViewMatrix(Vec3d eye, double pitch, double yaw) {
-        double radPitch = pitch * Math.PI / 180;
-        double radYaw = yaw * Math.PI / 180;
-        double cosPitch = Math.cos(radPitch);
-        double sinPitch = Math.sin(radPitch);
-        double cosYaw = Math.cos(radYaw);
-        double sinYaw = Math.sin(radYaw);
-        Vec3d xAxis = new Vec3d(cosYaw, 0, -sinYaw);
-        Vec3d yAxis = new Vec3d(sinYaw * sinPitch, cosPitch, cosYaw * sinPitch);
-        Vec3d zAxis = new Vec3d(sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw);
-        return new Matr4x4(new double[][]{
-                {xAxis.x, yAxis.x, zAxis.x, 0},
-                {xAxis.y, yAxis.y, zAxis.y, 0},
-                {xAxis.z, yAxis.z, zAxis.z, 0},
-                {-xAxis.Dot(eye), -yAxis.Dot(eye), -zAxis.Dot(eye), 1}
-        });
-    }
-
-    public static Matr4x4 arcBallCamera(double distance, double xRotate, double yRotate) {
-        Vec3d position = new Vec3d(0, 0, -distance);
-        Vec3d target = new Vec3d(0, 0, 0);
-        Matr4x4 rotationX = Matr4x4.rotationX(-xRotate);
-        position = position.subtract(target).multiply(rotationX);
-        Matr4x4 rotationY = Matr4x4.rotationY(-yRotate);
-        Vec3d finalPos = (position.subtract(target).multiply(rotationY));
-        return Matr4x4.getCameraMatrix(finalPos, new Vec3d(0, 0, 0), new Vec3d(0, 1, 0));
-    }
 }
