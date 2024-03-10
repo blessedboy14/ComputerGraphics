@@ -18,9 +18,9 @@ public class Graphics {
 
     // light params
     private final double ambient = 0.0f;
-    private final double diffuse = 0.5f;
-    private final double specular = 0.8f;
-    private final double shininess = 64.0f;
+    private final double diffuse = 0.0f;
+    private final double specular = 1.0f;
+    private final double shininess = 32.0f;
     //
 
     private Color reflectedClr = Color.WHITE;
@@ -128,6 +128,7 @@ public class Graphics {
 
     public void rasterize(Triangle tri, Matr4x4 resMatrix, Color clr, Vec3d lightDir) {
 /*        Color pixelColor = calculateColor(tri, clr, lightDir);*/
+        Vec3d[] oldP = tri.getPoints();
         tri = tri.multiplyMatrix(resMatrix);
         Vec3d[] v = tri.getPoints();
         int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
@@ -145,7 +146,7 @@ public class Graphics {
                     if (p.z < bf.get(px, py)) {
                         bf.edit(px, py, p.z);
 /*                        Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
-                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir);
+                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir, oldP);
                         buffer.setRGB(px, py, pixelColor.getRGB());
                     }
                 }
@@ -161,7 +162,11 @@ public class Graphics {
         return calculateFromIntense(clr, intense);
     }
 
-    private Color phongLightColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light) {
+    private Color phongLightColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light, Vec3d[] points) {
+        Vec3d point = points[0].grade(bc_coords.x)
+                .add(points[1].grade(bc_coords.y))
+                .add(points[2].grade(bc_coords.z));
+        light = cam.getEye().subtract(point).toNormal();
         Vec3d ambient = new Vec3d(clr.getRed(), clr.getGreen(), clr.getBlue());
         Color diffuseClr = phongShadingColor(n, bc_coords, clr, light);
         Vec3d diffuse = new Vec3d(diffuseClr.getRed(), diffuseClr.getGreen(), diffuseClr.getBlue());
@@ -285,17 +290,17 @@ public class Graphics {
         double z = 1 / uv.z;
         uv = uv.grade(z);
         uv.x = (uv.x < 0 ? (Math.abs(uv.x) % 1.0f) : uv.x % 1.0f);
-        uv.y = (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
-        Vec3d diffuse = diffuseApply(maps[0], uv.revert());
+        uv.y = 1 - (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
+        Vec3d diffuse = diffuseApply(maps[0], uv);
         Vec3d normal = new Vec3d(1, 1, 1);
         double intense = 1;
         if (maps[1] != null) {
-            normal = universalNormalApply(maps[1], uv.revert(), tri,getPointNormal(tri.getNormals(), bc), light);
+            normal = universalNormalApply(maps[1], uv, tri,getPointNormal(tri.getNormals(), bc), light);
             intense = Math.max(0.0f, normal.Dot(light));
         }
         double specClr = 0;
         if (maps[2] != null) {
-            specClr = specularApply(maps[2], uv.revert(), normal, light);
+            specClr = specularApply(maps[2], uv, normal, light);
         }
         diffuse = diffuse.grade(intense + this.specular*specClr);
         return new Color((float) Math.min(1.0f, (diffuse.x) / 255.0f),

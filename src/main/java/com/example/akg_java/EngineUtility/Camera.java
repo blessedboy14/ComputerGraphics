@@ -10,7 +10,7 @@ public class Camera {
     private Vec3d target = new Vec3d(0, 0, 0);
     private final Vec3d up = new Vec3d(0, 1, 0);
     private Vec3d eye = new Vec3d(0, 0, CAMERA_DISTANCE);
-    public static double CAMERA_DISTANCE = 8.0f;
+    public static double CAMERA_DISTANCE = 5.0f;
     private double theta = 0;
     private double phi = 0;
     public Vec3d getEye() {
