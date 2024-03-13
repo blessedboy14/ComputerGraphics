@@ -18,8 +18,8 @@ public class Graphics {
 
     // light params
     private final double ambient = 0.0f;
-    private final double diffuse = 0.0f;
-    private final double specular = 1.0f;
+    private final double diffuse = 0.5f;
+    private final double specular = 0.5f;
     private final double shininess = 32.0f;
     //
 
@@ -147,7 +147,10 @@ public class Graphics {
                         bf.edit(px, py, p.z);
 /*                        Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
                         Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir, oldP);
-                        buffer.setRGB(px, py, pixelColor.getRGB());
+                        int colorInt = new Color((float)Math.pow(pixelColor.getRed() / 255.0f, 1.0f/2.2f),
+                                (float)Math.pow(pixelColor.getGreen()  / 255.0f, 1.0f/2.2f),
+                                (float)Math.pow(pixelColor.getBlue()  / 255.0f, 1.0f/2.2f)).getRGB();
+                                buffer.setRGB(px, py, colorInt);
                     }
                 }
             }
@@ -170,8 +173,10 @@ public class Graphics {
         Vec3d ambient = new Vec3d(clr.getRed(), clr.getGreen(), clr.getBlue());
         Color diffuseClr = phongShadingColor(n, bc_coords, clr, light);
         Vec3d diffuse = new Vec3d(diffuseClr.getRed(), diffuseClr.getGreen(), diffuseClr.getBlue());
-        Vec3d reflect = reflection(light, getPointNormal(n, bc_coords)).toNormal();
-        double sStrength = Math.pow(Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflect)), shininess);
+/*        Vec3d reflect = reflection(light, getPointNormal(n, bc_coords)).toNormal();*/
+        Vec3d h = light.add(light).toNormal();
+/*        double sStrength = Math.pow(Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflect)), shininess);*/
+        double sStrength = Math.pow(Math.max(0.0f, h.Dot(getPointNormal(n, bc_coords).toNormal())), shininess);
         clr = Color.WHITE;
         Vec3d specular = new Vec3d(clr.getRed() * sStrength, clr.getGreen() * sStrength, clr.getBlue() * sStrength);
         Vec3d resClr = ambient.grade(this.ambient)
@@ -281,7 +286,6 @@ public class Graphics {
     }
 
     private int universalApply(BufferedImage[] maps, Vec3d bc, Triangle tri, Vec3d light) {
-/*        Texture[] textures = tri.getTextures();*/
         Texture[] textures = divideByZ(tri.getTextures(), tri.getPoints());
         Vec3d uv = textures[0].grade(bc.x)
                 .add(textures[1].grade(bc.y))
@@ -302,7 +306,7 @@ public class Graphics {
         if (maps[2] != null) {
             specClr = specularApply(maps[2], uv, normal, light);
         }
-        diffuse = diffuse.grade(intense + this.specular*specClr);
+        diffuse = diffuse.grade(intense + specClr);
         return new Color((float) Math.min(1.0f, (diffuse.x) / 255.0f),
                 (float) Math.min(1.0f, (diffuse.y) / 255.0f), (float) Math.min(1.0f, (diffuse.z) / 255.0f)).getRGB();
     }
@@ -325,7 +329,8 @@ public class Graphics {
         double green;
         double blue;
         if (!isTangentSpace) {
-            red = 1 - ((normal_clr >> 16) & 0xFF) / 255.0f;
+/*            red = 1 - ((normal_clr >> 16) & 0xFF) / 255.0f;*/
+            red = ((normal_clr >> 16) & 0xFF) / 255.0f;
             green = ((normal_clr >> 8) & 0xFF) / 255.0f;
             blue = (normal_clr & 0xFF) / 255.0f;
         } else {
@@ -363,13 +368,12 @@ public class Graphics {
         int x = (int)Math.round((specular.getWidth() - 1) * uv.x);
         int y = (int)Math.round((specular.getHeight() - 1) * uv.y);
         int spec_clr = specular.getRGB(x, y);
-        double red = ((spec_clr >> 16) & 0xFF);
-        double green = ((spec_clr >> 8) & 0xFF);
-        double blue = (spec_clr & 0xFF);
-        double intensity = (red + green + blue) / 3.0f;
-        Vec3d reflection = reflection(light, normal).toNormal();
-        return Math.pow(
-                Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflection)), intensity);
+        double glossiness = 1 - (((spec_clr >> 8) & 0xFF) / 255.0f);
+        double a4 = Math.pow(glossiness, 4.0f);
+        Vec3d h = light.add(light).toNormal();
+        double sStrength = Math.pow(Math.max(0.0f, h.Dot(normal.toNormal())), a4 * 512) * a4 * 10;
+/*        Vec3d reflection = reflection(light, normal).toNormal();*/
+        return sStrength;
     }
 
     private int applyMaps(BufferedImage diffuse, BufferedImage normal, BufferedImage spec, Vec3d bc_coords, Vec3d[] t,

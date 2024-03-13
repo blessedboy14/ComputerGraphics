@@ -8,23 +8,21 @@ import com.example.akg_java.math.Matr4x4;
 import com.example.akg_java.math.Triangle;
 import com.example.akg_java.math.Vec3d;
 import com.example.akg_java.mouse.Listener;
-import com.sun.prism.paint.Color;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
-    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/untitled.obj";
+/*    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/untitled.obj";*/
+    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/Shovel Knight/shovel_low.obj";
     private static JFrame frame;
     private long prev;
     private Graphics graphics;
@@ -325,15 +323,13 @@ public class App extends JComponent {
                 ImageIO.read(new File(base + s))});
     }
 
-    private final String diff_path = "examples/Gwyn Lord of Cinder/a.tga";
+/*    private final String diff_path = "examples/Gwyn Lord of Cinder/a.tga";
     private final String n_path = "examples/Gwyn Lord of Cinder/a_n.tga";
-    private final String s_path = "examples/Gwyn Lord of Cinder/a_s.tga";
+    private final String s_path = "examples/Gwyn Lord of Cinder/a_s.tga";*/
 
-/*
     private final String diff_path = "examples/Shovel Knight/shovel_diffuse.png";
     private final String n_path = "examples/Shovel Knight/shovel_normal_map.png";
     private final String s_path = "examples/Shovel Knight/shovel_mrao.png";
-*/
 
     private BufferedImage head_diffuse;
     private BufferedImage head_normals;
@@ -341,14 +337,14 @@ public class App extends JComponent {
     private BufferedImage cube;
 
     private void init(BufferedImage buffer) throws IOException {
-        graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera, true);
+        graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera, false);
         prev = System.currentTimeMillis();
         cube = tryToReadTGA("examples\\cube.jpg");
         input = Mesh.loadMesh(App.fileName);
         camera.rotateCamera(Math.PI / 2, Math.PI / 2);
-/*        head_diffuse = tryToReadTGA(diff_path);
+        head_diffuse = tryToReadTGA(diff_path);
         head_normals = tryToReadTGA(n_path);
-        head_specular = tryToReadTGA(s_path);*/
+        head_specular = tryToReadTGA(s_path);
 /*        fillTagsMap();*/
         repaint();
     }
@@ -373,14 +369,19 @@ public class App extends JComponent {
 
     private Vec3d cameraPos = new Vec3d(0, 0, -1).toNormal();
     private Vec3d lightDir = new Vec3d(0, 0, -1).toNormal();
-    private java.awt.Color clr = new java.awt.Color(37, 87, 78);
+    private java.awt.Color clr2 = new java.awt.Color(255, 143, 0);
+    private java.awt.Color clr = new java.awt.Color((float) Math.pow(clr2.getRed() / 255.0f, 2.2f),
+            (float)Math.pow(clr2.getGreen() / 255.0f, 2.2f),
+            (float)Math.pow(clr2.getBlue() / 255.0f, 2.2f) );
+
+    private java.awt.Color bg = new java.awt.Color(32, 32, 32);
     private boolean isCentred = false;
     @Override
     public void paint(java.awt.Graphics g) {
         if (this.input != null) {
             prev = System.currentTimeMillis();
             zBuffer.drop();
-            graphics.clear(Color.BLACK.getIntArgbPre());
+            graphics.clear(bg.getRGB());
             Matr4x4 resultMatrix = camera.getCameraView()
                     .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f))
                     .multiply(Matr4x4.screen(WIDTH, HEIGHT));
@@ -391,7 +392,7 @@ public class App extends JComponent {
             long i = 0;
             for (Triangle triangle: input.getTris()) {
                 Vec3d triNorm = triangle.getNormal().grade(-1);
-                lightDir = camera.getEye().subtract(triangle.getPoints()[0]).toNormal();
+/*                lightDir = camera.getEye().subtract(triangle.getPoints()[0]).toNormal();*/
                 cameraPos = camera.getEye().subtract(triangle.getPoints()[0]).toNormal();
                 if (!(cameraPos.Dot(triNorm) <= 0.0f)) {
                     if (!isCentred) {
@@ -399,11 +400,11 @@ public class App extends JComponent {
                         Vec3d[] v = triangle.multiplyMatrix(camera.getCameraView()).getPoints();
                         centerVec = centerVec.add(v[0]).add(v[1]).add(v[2]);
                     }
-/*                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);*/
-                    graphics.textureTriangle(triangle, resultMatrix,
-                            new BufferedImage[] {cube, null, null},
+                    graphics.rasterize(triangle, resultMatrix, clr, lightDir);
+/*                    graphics.textureTriangle(triangle, resultMatrix,
+                            new BufferedImage[] {head_diffuse, head_normals, head_specular},
                             lightDir
-                    );
+                    );*/
 /*                    if (!triangle.getTag().isEmpty() && !Objects.equals(triangle.getTag(), "P_ssyatu_00_d_0") &&
                             !Objects.equals(triangle.getTag(), "P_ssyatu_00_d_u_0") && !Objects.equals(triangle.getTag(), "P_buraN_d_0")) {
                         if (!triangle.getTag().isEmpty() && tagToPaths.containsKey(triangle.getTag())) {
@@ -438,6 +439,10 @@ public class App extends JComponent {
         }
         camera.updateDistance();
         repaint();
+    }
+
+    public void lightMoving(double xMove, double yMove) {
+
     }
 
 }
