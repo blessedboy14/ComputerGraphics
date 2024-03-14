@@ -8,10 +8,10 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 public class Graphics {
-    private final BufferedImage buffer;
-    private final int width;
-    private final int height;
-    private final ZBuffer bf;
+    private BufferedImage buffer;
+    private int width;
+    private int height;
+    private ZBuffer bf;
     private final Camera cam;
 
     private boolean isTangentSpace;
@@ -20,10 +20,17 @@ public class Graphics {
     private final double ambient = 0.0f;
     private final double diffuse = 0.5f;
     private final double specular = 0.5f;
-    private final double shininess = 32.0f;
+    private final double shininess = 64.0f;
     //
 
     private Color reflectedClr = Color.WHITE;
+
+    public void changeBufferParams(BufferedImage buffer, int width, int height, ZBuffer bf) {
+        this.buffer = buffer;
+        this.width = width;
+        this.height = height;
+        this.bf = bf;
+    }
 
     public Graphics(BufferedImage buffer, int width, int height, ZBuffer bf, Camera cam, boolean isTangentSpace) {
         this.buffer = buffer;
@@ -100,6 +107,9 @@ public class Graphics {
         BresenhamLine((int)v[0].x, (int)v[0].y, (int)v[1].x, (int)v[1].y, color);
         BresenhamLine((int)v[1].x, (int)v[1].y, (int)v[2].x, (int)v[2].y, color);
         BresenhamLine((int)v[2].x, (int)v[2].y, (int)v[0].x, (int)v[0].y, color);
+/*        DDAline((int)v[0].x, (int)v[0].y, (int)v[1].x, (int)v[1].y, color);
+        DDAline((int)v[1].x, (int)v[1].y, (int)v[2].x, (int)v[2].y, color);
+        DDAline((int)v[2].x, (int)v[2].y, (int)v[0].x, (int)v[0].y, color);*/
     }
 
     private Vec3d barycentric(Vec3d[] v, Vec3d p) {
@@ -126,8 +136,8 @@ public class Graphics {
         return calculateFromIntense(base, intense);
     }
 
-    public void rasterize(Triangle tri, Matr4x4 resMatrix, Color clr, Vec3d lightDir) {
-/*        Color pixelColor = calculateColor(tri, clr, lightDir);*/
+    public void rasterize(Triangle tri, Matr4x4 resMatrix, Color clr, Vec3d lightPos) {
+/*        Color pixelColor = calculateColor(tri, clr, lightPos);*/
         Vec3d[] oldP = tri.getPoints();
         tri = tri.multiplyMatrix(resMatrix);
         Vec3d[] v = tri.getPoints();
@@ -145,8 +155,8 @@ public class Graphics {
                     int py = (int)Math.round(p.y);
                     if (p.z < bf.get(px, py)) {
                         bf.edit(px, py, p.z);
-/*                        Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightDir);*/
-                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightDir, oldP);
+/*                        Color pixelColor = phongShadingColor(tri.getNormals(), bc_coords, clr, lightPos);*/
+                        Color pixelColor = phongLightColor(tri.getNormals(), bc_coords, clr, lightPos, oldP);
                         int colorInt = new Color((float)Math.pow(pixelColor.getRed() / 255.0f, 1.0f/2.2f),
                                 (float)Math.pow(pixelColor.getGreen()  / 255.0f, 1.0f/2.2f),
                                 (float)Math.pow(pixelColor.getBlue()  / 255.0f, 1.0f/2.2f)).getRGB();
@@ -157,39 +167,8 @@ public class Graphics {
         }
     }
 
-    private Color phongShadingColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light) {
-        Vec3d interpolatedNormal = n[0].grade(bc_coords.x)
-                .add(n[1].grade(bc_coords.y))
-                .add(n[2].grade(bc_coords.z)).toNormal();
-        double intense = Math.max(0.0f, interpolatedNormal.Dot(light));
-        return calculateFromIntense(clr, intense);
-    }
-
-    private Color phongLightColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light, Vec3d[] points) {
-        Vec3d point = points[0].grade(bc_coords.x)
-                .add(points[1].grade(bc_coords.y))
-                .add(points[2].grade(bc_coords.z));
-        light = cam.getEye().subtract(point).toNormal();
-        Vec3d ambient = new Vec3d(clr.getRed(), clr.getGreen(), clr.getBlue());
-        Color diffuseClr = phongShadingColor(n, bc_coords, clr, light);
-        Vec3d diffuse = new Vec3d(diffuseClr.getRed(), diffuseClr.getGreen(), diffuseClr.getBlue());
-/*        Vec3d reflect = reflection(light, getPointNormal(n, bc_coords)).toNormal();*/
-        Vec3d h = light.add(light).toNormal();
-/*        double sStrength = Math.pow(Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflect)), shininess);*/
-        double sStrength = Math.pow(Math.max(0.0f, h.Dot(getPointNormal(n, bc_coords).toNormal())), shininess);
-        clr = Color.WHITE;
-        Vec3d specular = new Vec3d(clr.getRed() * sStrength, clr.getGreen() * sStrength, clr.getBlue() * sStrength);
-        Vec3d resClr = ambient.grade(this.ambient)
-                .add(diffuse.grade(this.diffuse))
-                .add(specular.grade(this.specular));
-        return new Color((float)(Math.min(255.f, resClr.x))/ 255,
-                (float)(Math.min(255.f, resClr.y)) / 255,
-                (float)(Math.min(255.f, resClr.z)) / 255);
-    }
-
-    public void tryToMakeDiffuseMap(Triangle tri, Matr4x4 matrix, BufferedImage diff, BufferedImage norm, BufferedImage spec,
-                                    Vec3d lightDir, Color clr) {
-        tri = tri.multiplyMatrix2(matrix);
+    public void bulbRaster(Triangle tri, Matr4x4 matrix, Color clr) {
+        tri = tri.multiplyMatrix(matrix);
         Vec3d[] v = tri.getPoints();
         int minY = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
         int minX = (int) Math.round(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
@@ -205,41 +184,48 @@ public class Graphics {
                     int py = (int)Math.round(p.y);
                     if (p.z < bf.get(px, py)) {
                         bf.edit(px, py, p.z);
-                        Vec3d[] t = tri.getTexturesAsVec();
-                        int pixelColor = applyMaps(diff, norm, spec, bc_coords, t, lightDir, tri.getNormals(), clr,
-                                tri.getPoints());
-                        buffer.setRGB(px, py, pixelColor);
+                        buffer.setRGB(px, py, clr.getRGB());
                     }
                 }
             }
         }
     }
 
-    public void tryToApplyMultiple(BufferedImage[] textures, Triangle tri, Matr4x4 matrix, Vec3d light, Color clr) {
-        tri = tri.multiplyMatrix2(matrix);
-        Vec3d[] v = tri.getPoints();
-        int minY = (int) Math.floor(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
-        int minX = (int) Math.floor(Math.max(0.0f, Collections.min(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
-        int maxY = (int) Math.ceil(Math.min(height, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getY)).getY()));
-        int maxX = (int) Math.ceil(Math.min(width, Collections.max(Arrays.asList(v), Comparator.comparingDouble(Vec3d::getX)).getX()));
-        Vec3d p = new Vec3d(0, 0, 0);
-        for (p.x = minX; p.x <= maxX; p.x++) {
-            for (p.y = minY; p.y <= maxY; p.y++) {
-                Vec3d bc_coords = barycentric(v, p);
-                if (!(bc_coords.x < 0 || bc_coords.y < 0 || bc_coords.z < 0)) {
-                    p.z = v[0].z * bc_coords.x + v[1].z * bc_coords.y + v[2].z * bc_coords.z;
-                    int px = (int)Math.round(p.x);
-                    int py = (int)Math.round(p.y);
-                    if (p.z < bf.get(px, py)) {
-                        bf.edit(px, py, p.z);
-                        Vec3d[] t = tri.getTexturesAsVec();
-                        int pixelColor = applyMaps(textures[0], textures[1], textures[2], bc_coords, t, light,
-                                tri.getNormals(), v, clr);
-                        buffer.setRGB(px, py, pixelColor);
-                    }
-                }
-            }
+    private Color phongShadingColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light) {
+        double intense = calculateIntense(n, bc_coords, light);
+        return calculateFromIntense(clr, intense);
+    }
+
+    private double calculateIntense(Vec3d[] n, Vec3d bc_coords, Vec3d light) {
+        Vec3d interpolatedNormal = n[0].grade(bc_coords.x)
+                .add(n[1].grade(bc_coords.y))
+                .add(n[2].grade(bc_coords.z)).toNormal();
+        return Math.max(0.0f, interpolatedNormal.Dot(light));
+    }
+
+    private Color phongLightColor(Vec3d[] n, Vec3d bc_coords, Color clr, Vec3d light, Vec3d[] points) {
+        Vec3d point = points[0].grade(bc_coords.x)
+                .add(points[1].grade(bc_coords.y))
+                .add(points[2].grade(bc_coords.z));
+/*        light = light.subtract(point).toNormal();*/
+        light = cam.getEye().subtract(point).toNormal();
+        Vec3d ambient = new Vec3d(clr.getRed(), clr.getGreen(), clr.getBlue());
+        double intense = calculateIntense(n, bc_coords, light);
+        Color diffuseClr = calculateFromIntense(clr, intense);
+        Vec3d diffuse = new Vec3d(diffuseClr.getRed(), diffuseClr.getGreen(), diffuseClr.getBlue());
+        double sStrength = 0.0f;
+        if (intense > 0.0f) {
+            Vec3d h = light.add(cam.getEye().subtract(point)).toNormal();
+            sStrength = Math.pow(Math.max(0.0f, h.Dot(getPointNormal(n, bc_coords).toNormal())), shininess);
         }
+        clr = Color.WHITE;
+        Vec3d specular = new Vec3d(clr.getRed() * sStrength, clr.getGreen() * sStrength, clr.getBlue() * sStrength);
+        Vec3d resClr = ambient.grade(this.ambient)
+                .add(diffuse.grade(this.diffuse))
+                .add(specular.grade(this.specular));
+        return new Color((float)(Math.min(255.f, resClr.x))/ 255,
+                (float)(Math.min(255.f, resClr.y)) / 255,
+                (float)(Math.min(255.f, resClr.z)) / 255);
     }
 
     private int[] determineBox(Vec3d[] points) {
@@ -349,21 +335,6 @@ public class Graphics {
         return clr;
     }
 
-/*    private Vec3d specularApply2(BufferedImage specular, Vec3d uv, Color baseColor, Vec3d normal, Vec3d light) {
-        int x = (int)Math.round((specular.getWidth() - 1) * uv.x);
-        int y = (int)Math.round((specular.getHeight() - 1) * uv.y);
-        int spec_clr = specular.getRGB(x, y);
-        double red = ((spec_clr >> 16) & 0xFF);
-        double green = ((spec_clr >> 8) & 0xFF);
-        double blue = (spec_clr & 0xFF);
-        double intensity = (red + green + blue) / 3.0f;
-        Vec3d reflection = reflection(light, normal).toNormal();
-        double specStrength = Math.pow(
-                Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflection)), intensity);
-        return new Vec3d(baseColor.getRed() * specStrength, baseColor.getGreen() * specStrength,
-                baseColor.getBlue() * specStrength);
-    }*/
-
     private double specularApply(BufferedImage specular, Vec3d uv, Vec3d normal, Vec3d light) {
         int x = (int)Math.round((specular.getWidth() - 1) * uv.x);
         int y = (int)Math.round((specular.getHeight() - 1) * uv.y);
@@ -371,99 +342,8 @@ public class Graphics {
         double glossiness = 1 - (((spec_clr >> 8) & 0xFF) / 255.0f);
         double a4 = Math.pow(glossiness, 4.0f);
         Vec3d h = light.add(light).toNormal();
-        double sStrength = Math.pow(Math.max(0.0f, h.Dot(normal.toNormal())), a4 * 512) * a4 * 10;
-/*        Vec3d reflection = reflection(light, normal).toNormal();*/
-        return sStrength;
-    }
-
-    private int applyMaps(BufferedImage diffuse, BufferedImage normal, BufferedImage spec, Vec3d bc_coords, Vec3d[] t,
-                          Vec3d light, Vec3d[] n, Vec3d[] p, Color clr) {
-        Vec3d uv = t[0].grade(bc_coords.x)
-                .add(t[1].grade(bc_coords.y))
-                .add(t[2].grade(bc_coords.z));
-        uv.x = (uv.x < 0 ? (Math.abs(uv.x) % 1.0f) : uv.x % 1.0f);
-/*        uv.y = (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);*/
-        uv.y = 1 - (uv.y < 0 ? (Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
-        double intense = 1;
-        if (normal != null) {
-            intense = applyNormalMap(normal, uv, light, p, getPointNormal(n, bc_coords), t);
-        }
-        Vec3d resClr = applyDiffuseMap(diffuse, uv, intense);
-        if (spec != null) {
-            Vec3d specClr = applySpecularMap(spec, uv, light, n, bc_coords, clr).grade(0.2f);
-            resClr = resClr.add(specClr);
-        }
-        return new Color((float) Math.min(1.0f, (resClr.x) / 255.0f),
-                (float) Math.min(1.0f, (resClr.y) / 255.0f), (float) Math.min(1.0f, (resClr.z) / 255.0f)).getRGB();
-    }
-
-    private int applyMaps(BufferedImage diffuse, BufferedImage normal, BufferedImage spec, Vec3d bc_coords, Vec3d[] t,
-                      Vec3d light, Vec3d[] n, Color clr, Vec3d[] p) {
-        Vec3d uv = t[0].grade(bc_coords.x)
-                .add(t[1].grade(bc_coords.y))
-                .add(t[2].grade(bc_coords.z));
-        uv.x = 1 - (uv.x < 0? 1-(Math.abs(uv.x) % 1.0f) : uv.x % 1.0f);
-        uv.y = 1 - (uv.y < 0? 1-(Math.abs(uv.y) % 1.0f) : uv.y % 1.0f);
-        double intense = 1;
-        if (normal != null) {
-            intense = applyNormalMap(normal, uv, light);
-        }
-        Vec3d resClr = applyDiffuseMap(diffuse, uv, intense);
-        if (spec != null) {
-            Vec3d specClr = applySpecularMap(spec, uv, light, n, bc_coords, clr).grade(0.2f);
-            resClr = resClr.add(specClr);
-        }
-        return new Color((float) Math.min(1.0f, (5 + resClr.x) / 255.0f),
-            (float) Math.min(1.0f, (5 + resClr.y) / 255.0f), (float) Math.min(1.0f, (5 + resClr.z) / 255.0f)).getRGB();
-    }
-
-    private Vec3d applyDiffuseMap(BufferedImage diffuse, Vec3d uv, double intense) {
-        int xCoord = (int) Math.round((diffuse.getWidth() - 1) * uv.x);
-        int yCoord = (int) Math.round((diffuse.getHeight() - 1) * uv.y);
-        int diff = diffuse.getRGB(xCoord, yCoord);
-        double red = Math.min(255.0f, ((diff >> 16) & 0xFF) * intense);
-        double green = Math.min(255.0f, ((diff >> 8) & 0xFF) * intense);
-        double blue = Math.min(255.0f, (diff & 0xFF) * intense);
-        return new Vec3d(red, green, blue);
-    }
-
-    private double applyNormalMap(BufferedImage normal, Vec3d uv, Vec3d light) {
-        int nCoordX = (int)Math.round((normal.getWidth() - 1) * uv.x);
-        int nCoordY = (int)Math.round((normal.getHeight() - 1) * uv.y);
-        int normal_clr = normal.getRGB(nCoordX, nCoordY);
-        double red = 1 - ((normal_clr >> 16) & 0xFF) / 255.0f;
-        double green = ((normal_clr >> 8) & 0xFF) / 255.0f;
-        double blue = (normal_clr & 0xFF) / 255.0f;
-        Vec3d normal_c = new Vec3d(red, green, blue);
-        normal_c = normal_c.grade(2).subtract(new Vec3d(1, 1, 1)).toNormal();
-        return Math.max(0.0f, normal_c.Dot(light));
-    }
-
-    private double applyNormalMap(BufferedImage normal, Vec3d uv, Vec3d light, Vec3d[] v, Vec3d n, Vec3d[] txt) {
-        int nCoordX = (int)Math.round((normal.getWidth() - 1) * uv.x);
-        int nCoordY = (int)Math.round((normal.getHeight() - 1) * uv.y);
-        int normal_clr = normal.getRGB(nCoordX, nCoordY);
-        double red = ((normal_clr >> 16) & 0xFF) / 255.0f;
-        double green = 1 - ((normal_clr >> 8) & 0xFF) / 255.0f;
-        double blue = (normal_clr & 0xFF) / 255.0f;
-        Vec3d normal_c = new Vec3d(red, green, blue);
-        normal_c = normal_c.grade(2).subtract(new Vec3d(1, 1, 1))
-                .saveMultiply(fromTangentToWorld(v, n, txt)).toNormal();
-        return Math.max(0.0f, normal_c.Dot(light));
-    }
-
-    private Vec3d applySpecularMap(BufferedImage specular, Vec3d uv, Vec3d light, Vec3d[] n, Vec3d bc_coords, Color clr) {
-        int sCoordX = (int)Math.round((specular.getWidth() - 1) * uv.x);
-        int sCoordY = (int)Math.round((specular.getHeight() - 1) * uv.y);
-        int spec_clr = specular.getRGB(sCoordX, sCoordY);
-        double red = ((spec_clr >> 16) & 0xFF) / 255.0f;
-        double green = ((spec_clr >> 8) & 0xFF) / 255.0f;
-        double blue = (spec_clr & 0xFF) / 255.0f;
-        Vec3d reflect = reflection(light, getPointNormal(n, bc_coords)).toNormal();
-        double specular_coef = (spec_clr >> 16) & 0xFF;
-        double sStrength = Math.pow(Math.max(0.0f, cam.getEye().grade(-1).toNormal().Dot(reflect)), specular_coef);
-        Vec3d specul = new Vec3d(clr.getRed() * sStrength, clr.getGreen() * sStrength, clr.getBlue() * sStrength);
-        return new Vec3d(specul.x, specul.y, specul.z);
+        /*        Vec3d reflection = reflection(light, normal).toNormal();*/
+        return Math.pow(Math.max(0.0f, h.Dot(normal.toNormal())), a4 * 512) * a4 * 10;
     }
 
     private Matr4x4 fromTangentToWorld(Vec3d[] v, Vec3d n, Vec3d[] txt) {

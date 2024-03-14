@@ -102,12 +102,33 @@ public class Vec3d {
                 this.x*other.y - other.x*this.y);
     }
 
+    public Vec3d fromWorldToNDCSpace(int width, int height) {
+        return new Vec3d((this.x + 0.5) / width, (this.y + 0.5) / height, this.z);
+    }
+
+    public Vec3d fromNDCToScreen() {
+        return new Vec3d(2 * this.x - 1, 1 - 2 * this.y, this.z);
+    }
+
+    public Vec3d getRayDirection(int width, int height, Matr4x4 cam) {
+        double aspectRatio = width / (double)height;
+        double px = (2 * ((this.x + 0.5f) / width) - 1) * Math.tan(90.0f / 2 * Math.PI / 180) * aspectRatio;
+        double py = (1 - 2 * ((this.y + 0.5f) / height)) * Math.tan(90.0f / 2 * Math.PI / 180);
+        Vec3d rayDir =  new Vec3d(px, py, -1).subtract(Vec3d.zero());
+        return rayDir.multiply(cam).toNormal();
+    }
+
     public static Vec3d vectorOfTwoPoints(Vec3d left, Vec3d right) {
         return new Vec3d(right.x- left.x, right.y - left.y, right.z - left.z);
     }
 
     public static Vec3d zero() {
         return new Vec3d(0, 0, 0);
+    }
+
+    @Override
+    public String toString() {
+        return "x: " + this.x + ";y: " + this.y + ";z: " + this.z + ";\n";
     }
 
 }

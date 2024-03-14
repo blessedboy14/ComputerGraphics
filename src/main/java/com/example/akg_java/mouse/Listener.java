@@ -8,13 +8,11 @@ import com.github.strikerx3.jxinput.exceptions.XInputNotLoadedException;
 import com.example.akg_java.App;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Listener extends MouseAdapter {
+public class Listener extends MouseAdapter implements KeyListener {
     public Point lastPoint = null;
     private final float sensitivity = 0.01f;
     private final float controllerSens = 0.1f;
@@ -26,6 +24,8 @@ public class Listener extends MouseAdapter {
     double cameraPhi = Math.PI / 2;
     double cameraTheta = Math.PI / 2;
     private final float wheel_sensitivity = 0.2f;
+
+    private final float moveAmount = 3.0f;
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -99,5 +99,51 @@ public class Listener extends MouseAdapter {
         double t = e.getScrollAmount();
         int k = e.getWheelRotation();
         ((App)((JFrame)e.getSource()).getContentPane().getComponents()[0]).onWheelTouched(t*k * wheel_sensitivity);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int keyCode = e.getKeyCode();
+        App a = ((App)((JFrame)e.getSource()).getContentPane().getComponents()[0]);
+        switch (keyCode) {
+            case KeyEvent.VK_W:
+                a.lightMoving(0, moveAmount, 0);
+                break;
+            case KeyEvent.VK_A:
+                a.lightMoving(moveAmount, 0, 0);
+                break;
+            case KeyEvent.VK_S:
+                a.lightMoving(0, -moveAmount, 0);
+                break;
+            case KeyEvent.VK_D:
+                a.lightMoving(-moveAmount, 0, 0);
+                break;
+            case KeyEvent.VK_Q:
+                a.lightMoving(0, 0, moveAmount);
+                break;
+            case KeyEvent.VK_E:
+                a.lightMoving(0, 0, -moveAmount);
+                break;
+            default:
+                break;
+        }
+        switch (e.getKeyChar()) {
+            case '>':
+                a.changeImageSizes(1);
+                break;
+            case '<':
+                a.changeImageSizes(-1);
+                break;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }

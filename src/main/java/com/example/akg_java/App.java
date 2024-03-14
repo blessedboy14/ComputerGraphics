@@ -4,6 +4,7 @@ import com.example.akg_java.EngineUtility.Camera;
 import com.example.akg_java.EngineUtility.Graphics;
 import com.example.akg_java.EngineUtility.Mesh;
 import com.example.akg_java.EngineUtility.ZBuffer;
+import com.example.akg_java.math.MathUtility;
 import com.example.akg_java.math.Matr4x4;
 import com.example.akg_java.math.Triangle;
 import com.example.akg_java.math.Vec3d;
@@ -16,11 +17,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class App extends JComponent {
     private static final int HEIGHT = 800;
     private static final int HEADER = 40;
     private static final int WIDTH = 1600;
+    private static int IMG_WIDTH = 1600;
+    private static int IMG_HEIGHT = 800;
 /*    private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/untitled.obj";*/
     private static final String fileName = "D:/LABS/AKG/AKG_JAVA/examples/Shovel Knight/shovel_low.obj";
     private static JFrame frame;
@@ -30,8 +34,8 @@ public class App extends JComponent {
     private Mesh input;
     private final Map<String, BufferedImage[]> tagToPaths = new HashMap<>();
     private final Camera camera = new Camera(Matr4x4.getCameraMatrix(Matr4x4.camera(Camera.CAMERA_DISTANCE)));
+    private static BufferedImage buffer = new BufferedImage(IMG_WIDTH + 1, IMG_HEIGHT + 1, BufferedImage.TYPE_INT_RGB);
     public static void main(String[] args) throws IOException {
-        BufferedImage buffer = new BufferedImage(WIDTH + 1, HEIGHT + 1, BufferedImage.TYPE_INT_RGB);
         App app = new App();
         Listener l = new Listener(app);
         frame = new JFrame();
@@ -43,7 +47,8 @@ public class App extends JComponent {
         frame.addMouseMotionListener(l);
         frame.addMouseListener(l);
         frame.addMouseWheelListener(l);
-        app.init(buffer);
+        frame.addKeyListener(l);
+        app.init();
     }
 
 /*    private void fillTagsMap() throws IOException {
@@ -336,15 +341,15 @@ public class App extends JComponent {
     private BufferedImage head_specular;
     private BufferedImage cube;
 
-    private void init(BufferedImage buffer) throws IOException {
-        graphics = new Graphics(buffer, WIDTH, HEIGHT, zBuffer, camera, false);
+    private void init() throws IOException {
+        graphics = new Graphics(buffer, IMG_WIDTH, IMG_HEIGHT, zBuffer, camera, false);
         prev = System.currentTimeMillis();
-        cube = tryToReadTGA("examples\\cube.jpg");
+/*        cube = tryToReadTGA("examples\\cube.jpg");*/
         input = Mesh.loadMesh(App.fileName);
         camera.rotateCamera(Math.PI / 2, Math.PI / 2);
-        head_diffuse = tryToReadTGA(diff_path);
+/*        head_diffuse = tryToReadTGA(diff_path);
         head_normals = tryToReadTGA(n_path);
-        head_specular = tryToReadTGA(s_path);
+        head_specular = tryToReadTGA(s_path);*/
 /*        fillTagsMap();*/
         repaint();
     }
@@ -383,11 +388,8 @@ public class App extends JComponent {
             zBuffer.drop();
             graphics.clear(bg.getRGB());
             Matr4x4 resultMatrix = camera.getCameraView()
-                    .multiply(Matr4x4.projection(90, (double) HEIGHT / WIDTH, 0.1f, 1000.0f))
-                    .multiply(Matr4x4.screen(WIDTH, HEIGHT));
-/*            lightDir = camera.getEye().subtract(camera.getTarget()).toNormal();*/
-/*            .subtract(camera.getTarget())*/
-/*            cameraPos = camera.getEye().subtract(camera.getTarget()).toNormal();*/
+                .multiply(Matr4x4.projection(90, (double) IMG_HEIGHT / IMG_WIDTH, 1f, 1000.0f))
+                    .multiply(Matr4x4.screen(IMG_WIDTH, IMG_HEIGHT));
             Vec3d centerVec = new Vec3d(0, 0, 0);
             long i = 0;
             for (Triangle triangle: input.getTris()) {
@@ -421,9 +423,18 @@ public class App extends JComponent {
                 camera.new_y = centerVec.y;
                 isCentred = true;
             }
-            g.drawImage(graphics.getBuffer(), 0, 0, null);
+/*            drawLightSources(resultMatrix);*/
+            g.drawImage(graphics.getBuffer(), 0, 0, WIDTH + 1, HEIGHT + 1, null);
             long curr = System.currentTimeMillis() - prev;
             frame.setTitle(String.format("%d millis to draw", curr));
+        }
+    }
+
+    private void drawLightSources(Matr4x4 matrix) {
+        List<Triangle> tris = MathUtility.generateSphereMesh(.3f, lightDir, 12, 24);
+        for (Triangle tri: tris) {
+            graphics.bulbRaster(tri, matrix,
+                    Color.WHITE);
         }
     }
 
@@ -441,8 +452,20 @@ public class App extends JComponent {
         repaint();
     }
 
-    public void lightMoving(double xMove, double yMove) {
+    public void lightMoving(double xMove, double yMove, double zMove) {
+        lightDir.x += xMove;
+        lightDir.y += yMove;
+        lightDir.z += zMove;
+        repaint();
+    }
 
+    public void changeImageSizes(int val) {
+        IMG_WIDTH = val > 0 ? IMG_WIDTH * 2: IMG_WIDTH / 2;
+        IMG_HEIGHT = val > 0 ? IMG_HEIGHT * 2: IMG_HEIGHT / 2;
+        zBuffer = new ZBuffer(IMG_WIDTH, IMG_HEIGHT);
+        graphics.changeBufferParams(new BufferedImage(IMG_WIDTH + 1, IMG_HEIGHT + 1, BufferedImage.TYPE_INT_RGB),
+                IMG_WIDTH, IMG_HEIGHT, zBuffer);
+        repaint();
     }
 
 }

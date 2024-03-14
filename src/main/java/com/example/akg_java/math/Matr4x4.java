@@ -50,6 +50,24 @@ public class Matr4x4 {
         });
     }
 
+    public static Matr4x4 rotationXRad(double angle) {
+        return new Matr4x4(new double[][]{
+                {1, 0, 0, 0},
+                {0, Math.cos(angle), Math.sin(angle), 0},
+                {0, -Math.sin(angle), Math.cos(angle), 0},
+                {0, 0, 0, 1}
+        });
+    }
+
+    public static Matr4x4 rotationZRad(double angle) {
+        return new Matr4x4(new double[][]{
+                {Math.cos(angle), Math.sin(angle), 0, 0},
+                {-Math.sin(angle), Math.cos(angle), 0, 0},
+                {0, 0, 1, 0},
+                {0, 0, 0, 1}
+        });
+    }
+
     public static Matr4x4 rotationY(double angle) {
         double rad = angle / 180 * Math.PI;
         return new Matr4x4(new double[][]{
@@ -100,10 +118,10 @@ public class Matr4x4 {
 
     public static Matr4x4 camera(double distance) {
         return new Matr4x4(new double[][]{
-                {1, 0, 0, 0},
+                {-1, 0, 0, 0},
                 {0, 1, 0, 0},
-                {0, 0, 1, 0},
-                {0, 0, -distance, 1}
+                {0, 0, -1, 0},
+                {0, 0, distance, 1}
         });
     }
 
